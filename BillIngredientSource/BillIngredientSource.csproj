@@ -71,7 +71,10 @@
     <Compile Include="Init.cs" />
     <Compile Include="Patch_Dialog_BillConfig.cs" />
     <Compile Include="Patch_Dialog_BillConfig_DoWindowContents.cs" />
+    <Compile Include="Patch_WorkGiver_DoBill_TryFindBestBillIngredients.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StorageIngredientSearch.cs" />
+    <Compile Include="StorageIngredientSource.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
