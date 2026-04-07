@@ -69,6 +69,7 @@
     <Compile Include="BillDataStore.cs" />
     <Compile Include="IngredientSearchMode.cs" />
     <Compile Include="Init.cs" />
+    <Compile Include="Patch_Bill_Production_ExposeData.cs" />
     <Compile Include="Patch_Dialog_BillConfig.cs" />
     <Compile Include="Patch_Dialog_BillConfig_DoWindowContents.cs" />
     <Compile Include="Patch_WorkGiver_DoBill_TryFindBestBillIngredients.cs" />

@@ -17,6 +17,14 @@ namespace BillIngredientSource {
 			return dataByBill.TryGetValue(bill, out data);
 		}
 
+		public static void Set(Bill bill, BillData data) {
+			if (bill == null) {
+				return;
+			}
+
+			dataByBill[bill] = data ?? new BillData();
+		}
+
 		public static void Remove(Bill bill) {
 			dataByBill.Remove(bill);
 		}

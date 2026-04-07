@@ -22,7 +22,7 @@ namespace BillIngredientSource {
 				Widgets.ButtonInvisible(vanillaRadiusArea, false);
 			}
 
-			// ===== 2. 네 UI =====
+			// ===== 2. 커스텀 UI =====
 			float baseX = vanillaRadiusArea.x + 8f;
 			float baseY = vanillaRadiusArea.y + 4f;
 			float lineHeight = 28f;
@@ -41,23 +41,25 @@ namespace BillIngredientSource {
 			Rect storageButtonRect = new Rect(baseX + 95f, baseY + 4f, 24f, 24f);
 			if (Widgets.RadioButton(storageButtonRect.position, data.SearchMode == IngredientSearchMode.Storage)) {
 				data.SearchMode = IngredientSearchMode.Storage;
+				if (string.IsNullOrEmpty(data.SelectedStorageId)) {
+					data.SelectedStorageId = BillData.AllStoragesId;
+					data.SelectedZoneId = -1;
+					data.SelectedZoneLabel = "(모든 저장소)";
+				}
 			}
 
-			Rect storageLabelRect = new Rect(baseX + 123f, baseY, 90f, lineHeight);
+			Rect storageLabelRect = new Rect(baseX + 123f, baseY, 100f, lineHeight);
 			Widgets.Label(storageLabelRect, "저장소");
 
 			if (data.SearchMode == IngredientSearchMode.Storage) {
 				float buttonY = baseY + 34f;
-				Rect storageSelectRect = new Rect(baseX - 40f, buttonY, 260f, 30f);
+				Rect storageSelectRect = new Rect(baseX - 40f, buttonY, 280f, 30f);
 
-				string buttonLabel;
-				if (data.SelectedStorageId == BillData.AllStoragesId) {
-					buttonLabel = "재료 저장소: (모든 저장소)";
-				} else if (!string.IsNullOrEmpty(data.SelectedZoneLabel)) {
-					buttonLabel = "재료 저장소: " + data.SelectedZoneLabel;
-				} else {
-					buttonLabel = "재료 저장소 선택";
-				}
+				Map map = bill.Map;
+				string currentStorageLabel = ResolveStorageLabel(map, data);
+				string buttonLabel = string.IsNullOrEmpty(currentStorageLabel)
+					? "재료 저장소 선택"
+					: "재료 저장소: " + currentStorageLabel;
 
 				if (Widgets.ButtonText(storageSelectRect, buttonLabel)) {
 					List<FloatMenuOption> options = new List<FloatMenuOption>();
@@ -69,7 +71,6 @@ namespace BillIngredientSource {
 						Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
 					}));
 
-					Map map = Find.CurrentMap;
 					if (map != null) {
 						List<Zone_Stockpile> zones = map.zoneManager.AllZones
 							.OfType<Zone_Stockpile>()
@@ -91,13 +92,40 @@ namespace BillIngredientSource {
 						}
 					}
 
-					if (options.Count == 0) {
-						options.Add(new FloatMenuOption("(선택 가능한 저장구역 없음)", null));
-					}
-
 					Find.WindowStack.Add(new FloatMenu(options));
 				}
 			}
+		}
+
+		private static string ResolveStorageLabel(Map map, BillData data) {
+			if (data == null) {
+				return null;
+			}
+
+			if (data.SelectedStorageId == BillData.AllStoragesId) {
+				return "(모든 저장소)";
+			}
+
+			if (map != null && !string.IsNullOrEmpty(data.SelectedStorageId) && data.SelectedStorageId.StartsWith("Zone_")) {
+				string tail = data.SelectedStorageId.Substring("Zone_".Length);
+				if (int.TryParse(tail, out int zoneId)) {
+					Zone_Stockpile zone = map.zoneManager.AllZones
+						.OfType<Zone_Stockpile>()
+						.FirstOrDefault(z => z.ID == zoneId);
+					if (zone != null) {
+						data.SelectedZoneId = zone.ID;
+						data.SelectedZoneLabel = zone.label;
+						return string.IsNullOrEmpty(zone.label) ? "(이름 없음)" : zone.label;
+					}
+					return "(저장소 없음)";
+				}
+			}
+
+			if (!string.IsNullOrEmpty(data.SelectedZoneLabel)) {
+				return data.SelectedZoneLabel;
+			}
+
+			return null;
 		}
 	}
 }

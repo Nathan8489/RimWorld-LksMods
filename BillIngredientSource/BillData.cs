@@ -1,5 +1,7 @@
+using Verse;
+
 namespace BillIngredientSource {
-	public class BillData {
+	public class BillData : IExposable {
 		public const string AllStoragesId = "__ALL_STORAGES__";
 
 		public IngredientSearchMode SearchMode = IngredientSearchMode.Radius;
@@ -11,5 +13,12 @@ namespace BillIngredientSource {
 		// 기존 zone 전용 값들 (임시 호환 유지)
 		public int SelectedZoneId = -1;
 		public string SelectedZoneLabel;
+
+		public void ExposeData() {
+			Scribe_Values.Look(ref SearchMode, "searchMode", IngredientSearchMode.Radius);
+			Scribe_Values.Look(ref SelectedStorageId, "selectedStorageId");
+			Scribe_Values.Look(ref SelectedZoneId, "selectedZoneId", -1);
+			Scribe_Values.Look(ref SelectedZoneLabel, "selectedZoneLabel");
+		}
 	}
 }
