@@ -1,0 +1,6 @@
+﻿<ModMetaData>
+  <name>Bill Ingredient Source</name>
+  <author>Lk</author>
+  <description>Limit ingredient source to specific stockpiles.</description>
+  <packageId>Lk.billingredientsource</packageId>
+</ModMetaData>
