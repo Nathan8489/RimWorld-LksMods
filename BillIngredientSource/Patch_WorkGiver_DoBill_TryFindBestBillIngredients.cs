@@ -11,7 +11,7 @@ namespace BillIngredientSource {
 			Pawn pawn,
 			Thing billGiver,
 			List<ThingCount> chosen,
-			ref IngredientCount missingIngredient,
+			List<IngredientCount> missingIngredients,
 			ref bool __result) {
 
 			Bill_Production productionBill = bill as Bill_Production;
@@ -33,7 +33,7 @@ namespace BillIngredientSource {
 				pawn,
 				billGiver,
 				chosen,
-				out missingIngredient
+				missingIngredients
 			);
 
 			return false;

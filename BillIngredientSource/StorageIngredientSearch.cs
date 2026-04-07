@@ -11,10 +11,12 @@ namespace BillIngredientSource {
 			Pawn pawn,
 			Thing billGiver,
 			List<ThingCount> chosen,
-			out IngredientCount missingIngredient) {
+			List<IngredientCount> missingIngredients) {
 
-			missingIngredient = null;
 			chosen.Clear();
+			if (missingIngredients != null) {
+				missingIngredients.Clear();
+			}
 
 			if (bill == null || pawn == null || billGiver == null || billGiver.Map == null) {
 				return false;
@@ -22,7 +24,6 @@ namespace BillIngredientSource {
 
 			List<Thing> candidates = StorageIngredientSource.GetCandidateThings(billGiver.Map, bill);
 
-			// 최소한의 기본 필터
 			List<Thing> usable = new List<Thing>();
 			for (int i = 0; i < candidates.Count; i++) {
 				Thing thing = candidates[i];
@@ -42,7 +43,6 @@ namespace BillIngredientSource {
 				usable.Add(thing);
 			}
 
-			// 가까운 것부터 사용
 			usable.SortBy(t => (t.Position - billGiver.Position).LengthHorizontalSquared);
 
 			Dictionary<Thing, int> remaining = new Dictionary<Thing, int>();
@@ -82,7 +82,9 @@ namespace BillIngredientSource {
 				}
 
 				if (need > 0.001f) {
-					missingIngredient = ingredient;
+					if (missingIngredients != null) {
+						missingIngredients.Add(ingredient);
+					}
 					chosen.Clear();
 					return false;
 				}
