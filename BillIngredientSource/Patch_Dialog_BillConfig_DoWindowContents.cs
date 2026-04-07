@@ -14,45 +14,41 @@ namespace BillIngredientSource {
 
 			BillData data = BillDataStore.GetOrCreate(bill);
 
+			Rect vanillaRadiusArea = new Rect(inRect.x + 640f, inRect.y + 28f, 330f, 70f);
+
 			// ===== 1. 저장소 모드일 때 바닐라 반경 UI 숨기기 =====
 			if (data.SearchMode == IngredientSearchMode.Storage) {
-				// 이 좌표는 현재 1.6 UI 기준으로 맞춰가는 임시값
-				Rect vanillaRadiusArea = new Rect(inRect.x + 640f, inRect.y + 28f, 330f, 70f);
-
-				// 배경색으로 덮기
 				Widgets.DrawBoxSolid(vanillaRadiusArea, new Color(0.07f, 0.08f, 0.09f, 1f));
-
-				// 클릭 막기
 				Widgets.ButtonInvisible(vanillaRadiusArea, false);
 			}
 
 			// ===== 2. 네 UI =====
-			float baseX = inRect.x + 660f;
-			float baseY = inRect.y + 60f;
+			float baseX = vanillaRadiusArea.x + 8f;
+			float baseY = vanillaRadiusArea.y + 4f;
 			float lineHeight = 28f;
 
-			Rect labelRect = new Rect(baseX - 170f, baseY, 120f, lineHeight);
+			Rect labelRect = new Rect(baseX - 120f, baseY, 120f, lineHeight);
 			Widgets.Label(labelRect, "재료 탐색 방식");
 
-			Rect radiusButtonRect = new Rect(baseX - 40f, baseY + 4f, 24f, 24f);
+			Rect radiusButtonRect = new Rect(baseX + 10f, baseY + 4f, 24f, 24f);
 			if (Widgets.RadioButton(radiusButtonRect.position, data.SearchMode == IngredientSearchMode.Radius)) {
 				data.SearchMode = IngredientSearchMode.Radius;
 			}
 
-			Rect radiusLabelRect = new Rect(baseX - 12f, baseY, 40f, lineHeight);
+			Rect radiusLabelRect = new Rect(baseX + 38f, baseY, 40f, lineHeight);
 			Widgets.Label(radiusLabelRect, "반경");
 
-			Rect storageButtonRect = new Rect(baseX + 45f, baseY + 4f, 24f, 24f);
+			Rect storageButtonRect = new Rect(baseX + 95f, baseY + 4f, 24f, 24f);
 			if (Widgets.RadioButton(storageButtonRect.position, data.SearchMode == IngredientSearchMode.Storage)) {
 				data.SearchMode = IngredientSearchMode.Storage;
 			}
 
-			Rect storageLabelRect = new Rect(baseX + 73f, baseY, 60f, lineHeight);
+			Rect storageLabelRect = new Rect(baseX + 123f, baseY, 90f, lineHeight);
 			Widgets.Label(storageLabelRect, "저장소");
 
 			if (data.SearchMode == IngredientSearchMode.Storage) {
 				float buttonY = baseY + 34f;
-				Rect storageSelectRect = new Rect(baseX - 170f, buttonY, 260f, 30f);
+				Rect storageSelectRect = new Rect(baseX - 40f, buttonY, 260f, 30f);
 
 				string buttonLabel;
 				if (data.SelectedStorageId == BillData.AllStoragesId) {
