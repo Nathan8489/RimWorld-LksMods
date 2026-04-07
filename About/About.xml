@@ -3,4 +3,15 @@
   <author>Lk</author>
   <description>Limit ingredient source to specific stockpiles.</description>
   <packageId>Lk.billingredientsource</packageId>
+
+  <supportedVersions>
+    <li>1.6</li>
+  </supportedVersions>
+
+  <modDependencies>
+    <li>
+      <packageId>brrainz.harmony</packageId>
+      <displayName>Harmony</displayName>
+    </li>
+  </modDependencies>
 </ModMetaData>

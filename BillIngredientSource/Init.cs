@@ -5,7 +5,7 @@ namespace BillIngredientSource {
 	[StaticConstructorOnStartup]
 	public static class Init {
 		static Init() {
-			var harmony = new Harmony("you.billingredientsource");
+			var harmony = new Harmony("Lk.billingredientsource");
 			harmony.PatchAll();
 
 			Log.Message("[BillIngredientSource] Loaded");
