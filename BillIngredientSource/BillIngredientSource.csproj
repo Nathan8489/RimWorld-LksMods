@@ -55,6 +55,9 @@
       <HintPath>G:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>G:\SteamLibrary\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BillData.cs" />
@@ -62,6 +65,7 @@
     <Compile Include="IngredientSearchMode.cs" />
     <Compile Include="Init.cs" />
     <Compile Include="Patch_Dialog_BillConfig.cs" />
+    <Compile Include="Patch_Dialog_BillConfig_DoWindowContents.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />
