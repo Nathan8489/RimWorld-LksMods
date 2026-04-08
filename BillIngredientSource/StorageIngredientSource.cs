@@ -54,6 +54,15 @@ namespace BillIngredientSource {
 				return result;
 			}
 
+			// 특정 SlotGroup (연결 선반 포함)
+			if (!string.IsNullOrEmpty(data.SelectedStorageId) && data.SelectedStorageId.StartsWith("SlotGroup_")) {
+				SlotGroup slotGroup = FindSlotGroupByStorageId(map, data.SelectedStorageId);
+				if (slotGroup != null) {
+					AddSlotGroupThings(slotGroup, result, seenThingIds);
+				}
+				return result;
+			}
+
 			return result;
 		}
 
@@ -125,7 +134,64 @@ namespace BillIngredientSource {
 				}
 			}
 
+			if (map != null && storageId.StartsWith("SlotGroup_")) {
+				SlotGroup slotGroup = FindSlotGroupByStorageId(map, storageId);
+				if (slotGroup != null) {
+					return GetSlotGroupLabel(slotGroup);
+				}
+				return "(없어진 저장소)";
+			}
+
 			return fallbackLabel;
+		}
+
+		public static IEnumerable<SlotGroup> GetAllStorageSlotGroups(Map map) {
+			if (map == null) {
+				return Enumerable.Empty<SlotGroup>();
+			}
+
+			return map.haulDestinationManager.AllGroupsListInPriorityOrder
+				.OfType<SlotGroup>()
+				.Where(sg => sg.parent is Building_Storage)
+				.Where(HasCustomStorageGroupLabel)
+				.GroupBy(GetSlotGroupStorageId)
+				.Select(g => g.First())
+				.OrderBy(GetSlotGroupLabel);
+		}
+
+		private static bool HasCustomStorageGroupLabel(SlotGroup slotGroup) {
+			if (slotGroup == null) {
+				return false;
+			}
+
+			if (!(slotGroup.parent is Building_Storage storage)) {
+				return false;
+			}
+
+			string label = storage.label;
+
+			return !string.IsNullOrWhiteSpace(label);
+		}
+
+		public static string GetSlotGroupStorageId(SlotGroup slotGroup) {
+			if (slotGroup == null) {
+				return null;
+			}
+
+			IntVec3 cell = slotGroup.CellsList.Any() ? slotGroup.CellsList[0] : IntVec3.Invalid;
+			return "SlotGroup_" + cell.x + "_" + cell.z;
+		}
+
+		public static string GetSlotGroupLabel(SlotGroup slotGroup) {
+			if (slotGroup == null) {
+				return "(없음)";
+			}
+
+			if (slotGroup.parent is Building_Storage storage) {
+				return string.IsNullOrWhiteSpace(storage.label) ? null : storage.label;
+			}
+
+			return null;
 		}
 
 		public static IEnumerable<Building_Storage> GetAllStorageBuildings(Map map) {
@@ -143,7 +209,13 @@ namespace BillIngredientSource {
 				return null;
 			}
 
-			return "Building_" + storage.thingIDNumber;
+			SlotGroup slotGroup = storage.GetSlotGroup();
+			if (slotGroup == null) {
+				return null;
+			}
+
+			IntVec3 cell = slotGroup.CellsList.Any() ? slotGroup.CellsList[0] : storage.Position;
+			return "SlotGroup_" + cell.x + "_" + cell.z;
 		}
 
 		public static string GetStorageBuildingLabel(Building_Storage storage) {
@@ -156,7 +228,7 @@ namespace BillIngredientSource {
 				baseLabel = storage.def?.label ?? "storage";
 			}
 
-			return baseLabel + " (" + storage.Position.x + ", " + storage.Position.z + ")";
+			return baseLabel;
 		}
 
 		private static Zone_Stockpile FindZoneById(Map map, int zoneId) {
@@ -165,6 +237,30 @@ namespace BillIngredientSource {
 				Zone_Stockpile zone = allZones[i] as Zone_Stockpile;
 				if (zone != null && zone.ID == zoneId) {
 					return zone;
+				}
+			}
+
+			return null;
+		}
+
+		private static SlotGroup FindSlotGroupByStorageId(Map map, string storageId) {
+			if (map == null || string.IsNullOrEmpty(storageId) || !storageId.StartsWith("SlotGroup_")) {
+				return null;
+			}
+
+			string[] parts = storageId.Split('_');
+			if (parts.Length != 3) {
+				return null;
+			}
+
+			if (!int.TryParse(parts[1], out int x)) return null;
+			if (!int.TryParse(parts[2], out int z)) return null;
+
+			IntVec3 target = new IntVec3(x, 0, z);
+
+			foreach (SlotGroup group in map.haulDestinationManager.AllGroupsListInPriorityOrder.OfType<SlotGroup>()) {
+				if (group.CellsList.Contains(target)) {
+					return group;
 				}
 			}
 

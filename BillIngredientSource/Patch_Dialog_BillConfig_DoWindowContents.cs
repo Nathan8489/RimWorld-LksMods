@@ -109,9 +109,12 @@ namespace BillIngredientSource {
 
 					foreach (Zone_Stockpile zone in zones) {
 						Zone_Stockpile localZone = zone;
-						string optionLabel = string.IsNullOrEmpty(localZone.label)
-							? "[구역] (이름 없음)"
-							: "[구역] " + localZone.label;
+
+						if (string.IsNullOrWhiteSpace(localZone.label)) {
+							continue;
+						}
+
+						string optionLabel = "[구역] " + localZone.label;
 
 						options.Add(new FloatMenuOption(optionLabel, delegate {
 							data.SelectedZoneId = localZone.ID;
@@ -121,15 +124,20 @@ namespace BillIngredientSource {
 						}));
 					}
 
-					foreach (Building_Storage storage in StorageIngredientSource.GetAllStorageBuildings(map)) {
-						Building_Storage localStorage = storage;
-						string storageLabel = StorageIngredientSource.GetStorageBuildingLabel(localStorage);
+					foreach (SlotGroup slotGroup in StorageIngredientSource.GetAllStorageSlotGroups(map)) {
+						SlotGroup localSlotGroup = slotGroup;
+						string storageLabel = StorageIngredientSource.GetSlotGroupLabel(localSlotGroup);
+
+						if (string.IsNullOrWhiteSpace(storageLabel)) {
+							continue;
+						}
+
 						string optionLabel = "[저장소] " + storageLabel;
 
 						options.Add(new FloatMenuOption(optionLabel, delegate {
 							data.SelectedZoneId = -1;
 							data.SelectedZoneLabel = storageLabel;
-							data.SelectedStorageId = StorageIngredientSource.GetStorageBuildingId(localStorage);
+							data.SelectedStorageId = StorageIngredientSource.GetSlotGroupStorageId(localSlotGroup);
 							Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
 						}));
 					}
@@ -144,7 +152,41 @@ namespace BillIngredientSource {
 		}
 
 		private static void DrawAndBlockVanillaRadiusArea(Rect vanillaRadiusRect, Rect storageButtonRect) {
-			Widgets.DrawBoxSolid(vanillaRadiusRect, new Color(0.07f, 0.08f, 0.09f, 1f));
+			// 버튼 위/아래를 나눠서 그려 버튼은 안 덮음
+			Rect topRect = new Rect(
+				vanillaRadiusRect.x,
+				vanillaRadiusRect.y,
+				vanillaRadiusRect.width,
+				Mathf.Max(0f, storageButtonRect.y - vanillaRadiusRect.y)
+			);
+
+			Rect leftRect = new Rect(
+				vanillaRadiusRect.x,
+				storageButtonRect.y,
+				Mathf.Max(0f, storageButtonRect.x - vanillaRadiusRect.x),
+				storageButtonRect.height
+			);
+
+			Rect rightRect = new Rect(
+				storageButtonRect.xMax,
+				storageButtonRect.y,
+				Mathf.Max(0f, vanillaRadiusRect.xMax - storageButtonRect.xMax),
+				storageButtonRect.height
+			);
+
+			Rect bottomRect = new Rect(
+				vanillaRadiusRect.x,
+				storageButtonRect.yMax,
+				vanillaRadiusRect.width,
+				Mathf.Max(0f, vanillaRadiusRect.yMax - storageButtonRect.yMax)
+			);
+
+			Color bg = new Color(0.07f, 0.08f, 0.09f, 1f);
+
+			if (topRect.height > 0f) Widgets.DrawBoxSolid(topRect, bg);
+			if (leftRect.width > 0f) Widgets.DrawBoxSolid(leftRect, bg);
+			if (rightRect.width > 0f) Widgets.DrawBoxSolid(rightRect, bg);
+			if (bottomRect.height > 0f) Widgets.DrawBoxSolid(bottomRect, bg);
 
 			Event e = Event.current;
 			if (e == null) return;
@@ -153,7 +195,7 @@ namespace BillIngredientSource {
 				return;
 			}
 
-			// 저장소 버튼 위에서는 절대 이벤트를 먹지 않음
+			// 버튼 영역은 막지 않음
 			if (storageButtonRect.Contains(e.mousePosition)) {
 				return;
 			}
@@ -185,7 +227,7 @@ namespace BillIngredientSource {
 		private static Rect GetVanillaRadiusRect(Rect inRect, bool hasIngredientFilter) {
 			if (hasIngredientFilter) {
 				// 하단의 "재료 탐색 범위: ..." + 슬라이더 줄
-				return new Rect(inRect.xMax - 325f, inRect.yMax - 74f, 310f, 54f);
+				return new Rect(inRect.xMax - 323f, inRect.yMax - 67f, 306f, 46f);
 			}
 
 			// 우측 상단의 반경 라벨/슬라이더 영역
@@ -193,7 +235,7 @@ namespace BillIngredientSource {
 		}
 
 		private static Rect GetStorageButtonRect(Rect vanillaRadiusRect) {
-			return new Rect(vanillaRadiusRect.x, vanillaRadiusRect.y, vanillaRadiusRect.width, 30f);
+			return new Rect(vanillaRadiusRect.x + 2f, vanillaRadiusRect.y + 2f, vanillaRadiusRect.width - 4f, 28f);
 		}
 
 		private static Map GetBillMap(Bill_Production bill) {
