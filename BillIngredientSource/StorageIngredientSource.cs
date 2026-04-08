@@ -39,6 +39,19 @@ namespace BillIngredientSource {
 						AddSlotGroupThings(zone.GetSlotGroup(), result, seenThingIds);
 					}
 				}
+				return result;
+			}
+
+			// 특정 storage building (선반 포함)
+			if (!string.IsNullOrEmpty(data.SelectedStorageId) && data.SelectedStorageId.StartsWith("Building_")) {
+				int thingId;
+				if (TryParseTailInt(data.SelectedStorageId, "Building_", out thingId)) {
+					Building_Storage storage = FindStorageBuildingByThingId(map, thingId);
+					if (storage != null) {
+						AddSlotGroupThings(storage.GetSlotGroup(), result, seenThingIds);
+					}
+				}
+				return result;
 			}
 
 			return result;
@@ -73,7 +86,6 @@ namespace BillIngredientSource {
 					continue;
 				}
 
-				// 중복 방지
 				if (!seenThingIds.Add(thing.thingIDNumber)) {
 					continue;
 				}
@@ -82,12 +94,93 @@ namespace BillIngredientSource {
 			}
 		}
 
+		public static string GetStorageLabel(Map map, string storageId, string fallbackLabel = null) {
+			if (string.IsNullOrEmpty(storageId)) {
+				return fallbackLabel;
+			}
+
+			if (storageId == BillData.AllStoragesId) {
+				return "(모든 저장소)";
+			}
+
+			if (map != null && storageId.StartsWith("Zone_")) {
+				int zoneId;
+				if (TryParseTailInt(storageId, "Zone_", out zoneId)) {
+					Zone_Stockpile zone = FindZoneById(map, zoneId);
+					if (zone != null) {
+						return string.IsNullOrEmpty(zone.label) ? "(이름 없음)" : zone.label;
+					}
+					return "(없어진 저장구역)";
+				}
+			}
+
+			if (map != null && storageId.StartsWith("Building_")) {
+				int thingId;
+				if (TryParseTailInt(storageId, "Building_", out thingId)) {
+					Building_Storage storage = FindStorageBuildingByThingId(map, thingId);
+					if (storage != null) {
+						return GetStorageBuildingLabel(storage);
+					}
+					return "(없어진 저장소)";
+				}
+			}
+
+			return fallbackLabel;
+		}
+
+		public static IEnumerable<Building_Storage> GetAllStorageBuildings(Map map) {
+			if (map == null) {
+				return Enumerable.Empty<Building_Storage>();
+			}
+
+			return map.listerBuildings.AllBuildingsColonistOfClass<Building_Storage>()
+				.Where(b => b != null && b.Spawned)
+				.OrderBy(GetStorageBuildingLabel);
+		}
+
+		public static string GetStorageBuildingId(Building_Storage storage) {
+			if (storage == null) {
+				return null;
+			}
+
+			return "Building_" + storage.thingIDNumber;
+		}
+
+		public static string GetStorageBuildingLabel(Building_Storage storage) {
+			if (storage == null) {
+				return "(없음)";
+			}
+
+			string baseLabel = storage.LabelCap;
+			if (string.IsNullOrWhiteSpace(baseLabel)) {
+				baseLabel = storage.def?.label ?? "storage";
+			}
+
+			return baseLabel + " (" + storage.Position.x + ", " + storage.Position.z + ")";
+		}
+
 		private static Zone_Stockpile FindZoneById(Map map, int zoneId) {
 			List<Zone> allZones = map.zoneManager.AllZones;
 			for (int i = 0; i < allZones.Count; i++) {
 				Zone_Stockpile zone = allZones[i] as Zone_Stockpile;
 				if (zone != null && zone.ID == zoneId) {
 					return zone;
+				}
+			}
+
+			return null;
+		}
+
+		private static Building_Storage FindStorageBuildingByThingId(Map map, int thingId) {
+			if (map == null) {
+				return null;
+			}
+
+			List<Thing> things = map.listerThings.AllThings;
+			for (int i = 0; i < things.Count; i++) {
+				Building_Storage storage = things[i] as Building_Storage;
+				if (storage != null && storage.thingIDNumber == thingId) {
+					return storage;
 				}
 			}
 
