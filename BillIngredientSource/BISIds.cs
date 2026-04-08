@@ -10,5 +10,6 @@ namespace BillIngredientSource {
 		public const string ZonePrefix = "Zone_";
 		public const string BuildingPrefix = "Building_";
 		public const string SlotGroupPrefix = "SlotGroup_";
+		public const string StorageGroupPrefix = "StorageGroup_";
 	}
 }

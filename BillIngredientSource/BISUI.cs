@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace BillIngredientSource {
 	public static class BISUI {
-		public const float RadiusAreaRightOffset = 276f;
-		public const float RadiusAreaWidth = 274f;
-		public const float RadiusAreaHeight = 40f;
+		public const float RadiusAreaRightOffset = 254f;
+		public const float RadiusAreaWidth = 260f;
+		public const float RadiusAreaHeight = 36f;
 
 		public const float NoFilterY = 90f;
 		public const float HasFilterBottomOffset = 60f;

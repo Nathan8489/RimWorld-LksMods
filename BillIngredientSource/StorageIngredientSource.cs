@@ -13,27 +13,23 @@ namespace BillIngredientSource {
 				return result;
 			}
 
-			BillData data;
-			if (!BillDataStore.TryGet(bill, out data)) {
+			if (!BillDataStore.TryGet(bill, out BillData data)) {
 				return result;
 			}
 
-			if (data.SearchMode != IngredientSearchMode.Storage) {
+			if (string.IsNullOrEmpty(data.SelectedStorageId)) {
 				return result;
 			}
 
 			HashSet<int> seenThingIds = new HashSet<int>();
 
-			// 모든 저장소
 			if (data.SelectedStorageId == BISIds.AllStorages) {
 				AddAllStorageThings(map, result, seenThingIds);
 				return result;
 			}
 
-			// 특정 zone
-			if (!string.IsNullOrEmpty(data.SelectedStorageId) && data.SelectedStorageId.StartsWith(BISIds.ZonePrefix)) {
-				int zoneId;
-				if (TryParseTailInt(data.SelectedStorageId, BISIds.ZonePrefix, out zoneId)) {
+			if (data.SelectedStorageId.StartsWith(BISIds.ZonePrefix)) {
+				if (TryParseTailInt(data.SelectedStorageId, BISIds.ZonePrefix, out int zoneId)) {
 					Zone_Stockpile zone = FindZoneById(map, zoneId);
 					if (zone != null) {
 						AddSlotGroupThings(zone.GetSlotGroup(), result, seenThingIds);
@@ -42,20 +38,16 @@ namespace BillIngredientSource {
 				return result;
 			}
 
-			// 특정 storage building (선반 포함)
-			if (!string.IsNullOrEmpty(data.SelectedStorageId) && data.SelectedStorageId.StartsWith(BISIds.BuildingPrefix)) {
-				int thingId;
-				if (TryParseTailInt(data.SelectedStorageId, BISIds.BuildingPrefix, out thingId)) {
-					Building_Storage storage = FindStorageBuildingByThingId(map, thingId);
-					if (storage != null) {
-						AddSlotGroupThings(storage.GetSlotGroup(), result, seenThingIds);
-					}
+			if (data.SelectedStorageId.StartsWith(BISIds.StorageGroupPrefix)) {
+				string groupingLabel = data.SelectedStorageId.Substring(BISIds.StorageGroupPrefix.Length);
+				ISlotGroup group = FindStorageGroupByGroupingLabel(map, groupingLabel);
+				if (group != null) {
+					AddISlotGroupThings(map, group, result, seenThingIds);
 				}
 				return result;
 			}
 
-			// 특정 SlotGroup (연결 선반 포함)
-			if (!string.IsNullOrEmpty(data.SelectedStorageId) && data.SelectedStorageId.StartsWith(BISIds.SlotGroupPrefix)) {
+			if (data.SelectedStorageId.StartsWith(BISIds.SlotGroupPrefix)) {
 				SlotGroup slotGroup = FindSlotGroupByStorageId(map, data.SelectedStorageId);
 				if (slotGroup != null) {
 					AddSlotGroupThings(slotGroup, result, seenThingIds);
@@ -67,7 +59,6 @@ namespace BillIngredientSource {
 		}
 
 		private static void AddAllStorageThings(Map map, List<Thing> result, HashSet<int> seenThingIds) {
-			// stockpile zones
 			List<Zone> allZones = map.zoneManager.AllZones;
 			for (int i = 0; i < allZones.Count; i++) {
 				Zone_Stockpile zone = allZones[i] as Zone_Stockpile;
@@ -76,11 +67,28 @@ namespace BillIngredientSource {
 				}
 			}
 
-			// storage buildings (shelf 포함)
-			IEnumerable<Building_Storage> storages = map.listerBuildings.AllBuildingsColonistOfClass<Building_Storage>();
-			foreach (Building_Storage storage in storages) {
-				if (storage != null && storage.Spawned) {
-					AddSlotGroupThings(storage.GetSlotGroup(), result, seenThingIds);
+			List<SlotGroup> allGroups = map.haulDestinationManager.AllGroupsListInPriorityOrder;
+			for (int i = 0; i < allGroups.Count; i++) {
+				AddSlotGroupThings(allGroups[i], result, seenThingIds);
+			}
+		}
+
+		private static void AddISlotGroupThings(Map map, ISlotGroup group, List<Thing> result, HashSet<int> seenThingIds) {
+			if (group == null) {
+				return;
+			}
+
+			if (group is SlotGroup slotGroup) {
+				AddSlotGroupThings(slotGroup, result, seenThingIds);
+				return;
+			}
+
+			// StorageGroup인 경우, 그 그룹에 속한 모든 SlotGroup을 합침
+			List<SlotGroup> allGroups = map.haulDestinationManager.AllGroupsListInPriorityOrder;
+			for (int i = 0; i < allGroups.Count; i++) {
+				SlotGroup sg = allGroups[i];
+				if (sg.StorageGroup == group) {
+					AddSlotGroupThings(sg, result, seenThingIds);
 				}
 			}
 		}
@@ -109,35 +117,32 @@ namespace BillIngredientSource {
 			}
 
 			if (storageId == BISIds.AllStorages) {
-				return "(모든 저장소)";
+				return "BIS_AllStorages".Translate().ToString();
 			}
 
 			if (map != null && storageId.StartsWith(BISIds.ZonePrefix)) {
-				int zoneId;
-				if (TryParseTailInt(storageId, BISIds.ZonePrefix, out zoneId)) {
+				if (TryParseTailInt(storageId, BISIds.ZonePrefix, out int zoneId)) {
 					Zone_Stockpile zone = FindZoneById(map, zoneId);
 					if (zone != null) {
-						return string.IsNullOrEmpty(zone.label) ? "(이름 없음)" : zone.label;
+						return zone.label;
 					}
-					return "(없어진 저장구역)";
 				}
+				return "(없어진 저장구역)";
 			}
 
-			if (map != null && storageId.StartsWith(BISIds.BuildingPrefix)) {
-				int thingId;
-				if (TryParseTailInt(storageId, BISIds.BuildingPrefix, out thingId)) {
-					Building_Storage storage = FindStorageBuildingByThingId(map, thingId);
-					if (storage != null) {
-						return GetStorageBuildingLabel(storage);
-					}
-					return "(없어진 저장소)";
+			if (map != null && storageId.StartsWith(BISIds.StorageGroupPrefix)) {
+				string groupingLabel = storageId.Substring(BISIds.StorageGroupPrefix.Length);
+				ISlotGroup group = FindStorageGroupByGroupingLabel(map, groupingLabel);
+				if (group != null) {
+					return SlotGroup.GetGroupLabel(group);
 				}
+				return "(없어진 저장소)";
 			}
 
 			if (map != null && storageId.StartsWith(BISIds.SlotGroupPrefix)) {
 				SlotGroup slotGroup = FindSlotGroupByStorageId(map, storageId);
 				if (slotGroup != null) {
-					return GetSlotGroupLabel(slotGroup);
+					return SlotGroup.GetGroupLabel(slotGroup);
 				}
 				return "(없어진 저장소)";
 			}
@@ -145,110 +150,120 @@ namespace BillIngredientSource {
 			return fallbackLabel;
 		}
 
-		public static IEnumerable<SlotGroup> GetAllStorageSlotGroups(Map map) {
+		public static IEnumerable<ISlotGroup> GetAllSelectableStorageGroups(Map map) {
 			if (map == null) {
-				return Enumerable.Empty<SlotGroup>();
+				return Enumerable.Empty<ISlotGroup>();
 			}
 
-			return map.haulDestinationManager.AllGroupsListInPriorityOrder
-				.OfType<SlotGroup>()
-				.Where(sg => sg.parent is Building_Storage)
-				.Where(HasCustomStorageGroupLabel)
-				.GroupBy(GetSlotGroupStorageId)
-				.Select(g => g.First())
-				.OrderBy(GetSlotGroupLabel);
+			List<SlotGroup> allGroups = map.haulDestinationManager.AllGroupsListInPriorityOrder;
+			Dictionary<string, List<ISlotGroup>> tmpGroups = new Dictionary<string, List<ISlotGroup>>();
+
+			for (int i = 0; i < allGroups.Count; i++) {
+				SlotGroup slotGroup = allGroups[i];
+
+				if (slotGroup.StorageGroup != null) {
+					StorageGroup storageGroup = slotGroup.StorageGroup;
+					if (!tmpGroups.ContainsKey(storageGroup.GroupingLabel)) {
+						tmpGroups.Add(storageGroup.GroupingLabel, new List<ISlotGroup>());
+					}
+
+					if (!tmpGroups[storageGroup.GroupingLabel].Contains(storageGroup)) {
+						tmpGroups[storageGroup.GroupingLabel].Add(storageGroup);
+					}
+				} else if (!(slotGroup.parent is Building_Storage buildingStorage) || buildingStorage is IRenameable) {
+					if (!tmpGroups.ContainsKey(slotGroup.GroupingLabel)) {
+						tmpGroups.Add(slotGroup.GroupingLabel, new List<ISlotGroup>());
+					}
+
+					tmpGroups[slotGroup.GroupingLabel].Add(slotGroup);
+				}
+			}
+
+			return tmpGroups
+				.OrderBy(kvp => kvp.Value.Count > 0 ? kvp.Value[0].GroupingOrder : 0)
+				.SelectMany(kvp => kvp.Value);
 		}
 
-		private static bool HasCustomStorageGroupLabel(SlotGroup slotGroup) {
-			string label;
-			return TryGetCustomStorageGroupLabel(slotGroup, out label);
-		}
-
-		public static string GetSlotGroupStorageId(SlotGroup slotGroup) {
-			if (slotGroup == null) {
+		public static string GetStorageGroupId(ISlotGroup group) {
+			if (group == null) {
 				return null;
 			}
 
-			IntVec3 cell = slotGroup.CellsList.Any() ? slotGroup.CellsList[0] : IntVec3.Invalid;
-			return BISIds.SlotGroupPrefix + cell.x + "_" + cell.z;
-		}
-
-		public static string GetSlotGroupLabel(SlotGroup slotGroup) {
-			if (slotGroup == null) {
-				return "(없음)";
+			// 연결 선반 그룹
+			if (group is StorageGroup storageGroup) {
+				return BISIds.StorageGroupPrefix + storageGroup.GroupingLabel;
 			}
 
-			string label;
-			return TryGetCustomStorageGroupLabel(slotGroup, out label) ? label : null;
+			// 단일 SlotGroup
+			if (group is SlotGroup slotGroup) {
+				Zone_Stockpile zone = slotGroup.parent as Zone_Stockpile;
+				if (zone != null) {
+					return BISIds.ZonePrefix + zone.ID;
+				}
+
+				IntVec3 cell = slotGroup.CellsList.Any() ? slotGroup.CellsList[0] : IntVec3.Invalid;
+				return BISIds.SlotGroupPrefix + cell.x + "_" + cell.z;
+			}
+
+			return null;
 		}
 
-		private static bool TryGetCustomStorageGroupLabel(SlotGroup slotGroup, out string label) {
-			label = null;
-
-			if (slotGroup == null) {
+		public static bool IsStorageCompatibleWithBill(Bill_Production bill, Map map, ISlotGroup group) {
+			if (bill == null || map == null || group == null || bill.recipe?.ingredients == null) {
 				return false;
 			}
 
-			if (!(slotGroup.parent is Building_Storage storage)) {
+			ThingFilter storageFilter = null;
+
+			if (group is SlotGroup slotGroup) {
+				storageFilter = slotGroup.Settings?.filter;
+			} else if (group is StorageGroup) {
+				// 같은 StorageGroup에 속한 아무 SlotGroup 하나의 필터를 대표로 사용
+				List<SlotGroup> allGroups = map.haulDestinationManager.AllGroupsListInPriorityOrder;
+				for (int i = 0; i < allGroups.Count; i++) {
+					if (allGroups[i].StorageGroup == group) {
+						storageFilter = allGroups[i].Settings?.filter;
+						break;
+					}
+				}
+			}
+
+			if (storageFilter == null) {
 				return false;
 			}
 
-			// 1순위: 직접 지정된 커스텀 이름
-			if (!string.IsNullOrWhiteSpace(storage.label)) {
-				label = storage.label;
-				return true;
-			}
+			List<ThingDef> defs = DefDatabase<ThingDef>.AllDefsListForReading;
+			for (int i = 0; i < bill.recipe.ingredients.Count; i++) {
+				IngredientCount ingredient = bill.recipe.ingredients[i];
+				if (ingredient?.filter == null) {
+					continue;
+				}
 
-			// 2순위: 표시 라벨이 기본 def 라벨과 다르면 커스텀 이름으로 간주
-			string capLabel = storage.LabelCap;
-			string defLabel = storage.def?.label;
-
-			if (!string.IsNullOrWhiteSpace(capLabel)) {
-				if (string.IsNullOrWhiteSpace(defLabel) ||
-					!capLabel.Equals(defLabel, StringComparison.OrdinalIgnoreCase)) {
-					label = capLabel;
-					return true;
+				for (int j = 0; j < defs.Count; j++) {
+					ThingDef def = defs[j];
+					if (ingredient.filter.Allows(def) && storageFilter.Allows(def)) {
+						return true;
+					}
 				}
 			}
 
 			return false;
 		}
 
-		public static IEnumerable<Building_Storage> GetAllStorageBuildings(Map map) {
-			if (map == null) {
-				return Enumerable.Empty<Building_Storage>();
-			}
-
-			return map.listerBuildings.AllBuildingsColonistOfClass<Building_Storage>()
-				.Where(b => b != null && b.Spawned)
-				.OrderBy(GetStorageBuildingLabel);
-		}
-
-		public static string GetStorageBuildingId(Building_Storage storage) {
-			if (storage == null) {
+		private static ISlotGroup FindStorageGroupByGroupingLabel(Map map, string groupingLabel) {
+			if (map == null || string.IsNullOrEmpty(groupingLabel)) {
 				return null;
 			}
 
-			SlotGroup slotGroup = storage.GetSlotGroup();
-			if (slotGroup == null) {
-				return null;
+			List<SlotGroup> allGroups = map.haulDestinationManager.AllGroupsListInPriorityOrder;
+			for (int i = 0; i < allGroups.Count; i++) {
+				SlotGroup slotGroup = allGroups[i];
+				if (slotGroup.StorageGroup != null && slotGroup.StorageGroup.GroupingLabel == groupingLabel) {
+					return slotGroup.StorageGroup;
+				}
 			}
 
-			IntVec3 cell = slotGroup.CellsList.Any() ? slotGroup.CellsList[0] : storage.Position;
-			return BISIds.SlotGroupPrefix + cell.x + "_" + cell.z;
-		}
-
-		public static string GetStorageBuildingLabel(Building_Storage storage) {
-			if (storage == null) {
-				return "(없음)";
-			}
-
-			string baseLabel = storage.LabelCap;
-			if (string.IsNullOrWhiteSpace(baseLabel)) {
-				baseLabel = storage.def?.label ?? "storage";
-			}
-
-			return baseLabel;
+			return null;
 		}
 
 		private static Zone_Stockpile FindZoneById(Map map, int zoneId) {
@@ -278,25 +293,9 @@ namespace BillIngredientSource {
 
 			IntVec3 target = new IntVec3(x, 0, z);
 
-			foreach (SlotGroup group in map.haulDestinationManager.AllGroupsListInPriorityOrder.OfType<SlotGroup>()) {
+			foreach (SlotGroup group in map.haulDestinationManager.AllGroupsListInPriorityOrder) {
 				if (group.CellsList.Contains(target)) {
 					return group;
-				}
-			}
-
-			return null;
-		}
-
-		private static Building_Storage FindStorageBuildingByThingId(Map map, int thingId) {
-			if (map == null) {
-				return null;
-			}
-
-			List<Thing> things = map.listerThings.AllThings;
-			for (int i = 0; i < things.Count; i++) {
-				Building_Storage storage = things[i] as Building_Storage;
-				if (storage != null && storage.thingIDNumber == thingId) {
-					return storage;
 				}
 			}
 
@@ -312,39 +311,6 @@ namespace BillIngredientSource {
 
 			string tail = value.Substring(prefix.Length);
 			return int.TryParse(tail, out number);
-		}
-
-		public static bool IsStorageCompatibleWithBill(Bill_Production bill, SlotGroup slotGroup) {
-			if (bill == null || slotGroup == null || bill.recipe?.ingredients == null) {
-				return false;
-			}
-
-			StorageSettings settings = slotGroup.Settings;
-			if (settings == null) {
-				return false;
-			}
-
-			ThingFilter storageFilter = settings.filter;
-			if (storageFilter == null) {
-				return false;
-			}
-
-			for (int i = 0; i < bill.recipe.ingredients.Count; i++) {
-				IngredientCount ingredient = bill.recipe.ingredients[i];
-				if (ingredient?.filter == null) {
-					continue;
-				}
-
-				List<ThingDef> defs = DefDatabase<ThingDef>.AllDefsListForReading;
-				for (int j = 0; j < defs.Count; j++) {
-					ThingDef def = defs[j];
-					if (ingredient.filter.Allows(def) && storageFilter.Allows(def)) {
-						return true;
-					}
-				}
-			}
-
-			return false;
 		}
 	}
 }

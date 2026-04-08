@@ -115,12 +115,12 @@ namespace BillIngredientSource {
 		private static void DrawStorageButton(Rect rect, BillData data, Map map) {
 			string buttonLabel;
 			if (data.SelectedStorageId == BISIds.AllStorages) {
-				buttonLabel = "모든 저장구역 포함";
+				buttonLabel = Tr("BIS_AllStorages");
 			} else {
 				string selectedLabel = StorageIngredientSource.GetStorageLabel(map, data.SelectedStorageId, data.SelectedZoneLabel);
 				buttonLabel = string.IsNullOrEmpty(selectedLabel)
-					? "저장구역 선택안함(바닐라)"
-					: selectedLabel + "만 포함";
+					? Tr("BIS_NoStorageSelected")
+					: Tr("BIS_OnlyIncluded", selectedLabel);
 			}
 
 			Widgets.ButtonText(rect, buttonLabel);
@@ -129,17 +129,17 @@ namespace BillIngredientSource {
 		private static List<FloatMenuOption> BuildStorageOptions(Bill_Production bill, BillData data, Map map) {
 			List<FloatMenuOption> options = new List<FloatMenuOption>();
 
-			options.Add(new FloatMenuOption("저장구역 선택안함(바닐라)", delegate {
+			options.Add(new FloatMenuOption(Tr("BIS_NoStorageSelected"), delegate {
 				data.SelectedStorageId = null;
 				data.SelectedZoneId = -1;
 				data.SelectedZoneLabel = null;
 				data.SearchMode = IngredientSearchMode.Radius;
 			}));
 
-			options.Add(new FloatMenuOption("모든 저장구역 포함", delegate {
+			options.Add(new FloatMenuOption(Tr("BIS_AllStorages"), delegate {
 				data.SelectedStorageId = BISIds.AllStorages;
 				data.SelectedZoneId = -1;
-				data.SelectedZoneLabel = "모든 저장구역";
+				data.SelectedZoneLabel = Tr("BIS_AllStorages");
 				Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
 			}));
 
@@ -156,7 +156,7 @@ namespace BillIngredientSource {
 						continue;
 					}
 
-					string optionLabel = "[구역] " + localZone.label;
+					string optionLabel = Tr("BIS_ZoneOption", localZone.label);
 
 					options.Add(new FloatMenuOption(optionLabel, delegate {
 						data.SelectedZoneId = localZone.ID;
@@ -166,23 +166,24 @@ namespace BillIngredientSource {
 					}));
 				}
 
-				foreach (SlotGroup slotGroup in StorageIngredientSource.GetAllStorageSlotGroups(map)) {
-					SlotGroup localSlotGroup = slotGroup;
-					string storageLabel = StorageIngredientSource.GetSlotGroupLabel(localSlotGroup);
+				foreach (ISlotGroup group in StorageIngredientSource.GetAllSelectableStorageGroups(map)) {
+					ISlotGroup localGroup = group;
+					string storageLabel = SlotGroup.GetGroupLabel(localGroup);
 
 					if (string.IsNullOrWhiteSpace(storageLabel)) {
 						continue;
 					}
 
-					bool compatible = StorageIngredientSource.IsStorageCompatibleWithBill(bill, localSlotGroup);
+					bool compatible = StorageIngredientSource.IsStorageCompatibleWithBill(bill, map, localGroup);
+					string baseLabel = Tr("BIS_StorageOption", storageLabel);
 					string optionLabel = compatible
-						? "[저장소] " + storageLabel
-						: "[저장소] " + storageLabel + " (호환되지 않음)";
+						? baseLabel
+						: Tr("BIS_Incompatible", baseLabel);
 
 					options.Add(new FloatMenuOption(optionLabel, compatible ? (Action)delegate {
 						data.SelectedZoneId = -1;
 						data.SelectedZoneLabel = storageLabel;
-						data.SelectedStorageId = StorageIngredientSource.GetSlotGroupStorageId(localSlotGroup);
+						data.SelectedStorageId = StorageIngredientSource.GetStorageGroupId(localGroup);
 						Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
 					}
 					: null));
@@ -190,14 +191,13 @@ namespace BillIngredientSource {
 			}
 
 			if (options.Count == 0) {
-				options.Add(new FloatMenuOption("(선택 가능한 저장소 없음)", null));
+				options.Add(new FloatMenuOption(Tr("BIS_NoSelectableStorage"), null));
 			}
 
 			return options;
 		}
 
 		private static void DrawAndBlockVanillaRadiusArea(Rect vanillaRadiusRect, Rect storageButtonRect) {
-			// 버튼 위/아래를 나눠서 그려 버튼은 안 덮음
 			Rect topRect = new Rect(
 				vanillaRadiusRect.x,
 				vanillaRadiusRect.y,
@@ -240,7 +240,6 @@ namespace BillIngredientSource {
 				return;
 			}
 
-			// 버튼 영역은 막지 않음
 			if (storageButtonRect.Contains(e.mousePosition)) {
 				return;
 			}
@@ -259,11 +258,9 @@ namespace BillIngredientSource {
 
 		private static Rect GetVanillaRadiusRect(Rect inRect, bool hasIngredientFilter) {
 			if (hasIngredientFilter) {
-				// 하단 "재료 탐색 범위" 라벨 + 슬라이더 영역
 				return new Rect(inRect.xMax - BISUI.RadiusAreaRightOffset, inRect.yMax - BISUI.HasFilterBottomOffset, BISUI.RadiusAreaWidth, BISUI.RadiusAreaHeight);
 			}
 
-			// 우측 상단 반경 영역
 			return new Rect(inRect.xMax - BISUI.RadiusAreaRightOffset, inRect.y + BISUI.NoFilterY, BISUI.RadiusAreaWidth, BISUI.RadiusAreaHeight);
 		}
 
@@ -292,5 +289,11 @@ namespace BillIngredientSource {
 
 			return false;
 		}
+
+		private static string Tr(string key)
+			=> key.Translate().ToString();
+
+		private static string Tr(string key, params object[] args)
+			=> string.Format(key.Translate().ToString(), args);
 	}
 }
