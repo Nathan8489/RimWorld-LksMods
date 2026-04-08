@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <BIS_NoStorageSelected>No storage selected (Vanilla)</BIS_NoStorageSelected>
+  <BIS_AllStorages>Look Everywhere</BIS_AllStorages>
+  <BIS_ZonePrefix>[Zone] {0}</BIS_ZonePrefix>
+  <BIS_StoragePrefix>[Storage] {0}</BIS_StoragePrefix>
+  <BIS_OnlyIncluded>Look in {0}</BIS_OnlyIncluded>
+  <BIS_Incompatible>{0} (incompatible)</BIS_Incompatible>
+  <BIS_NoSelectableStorage>(No selectable storage)</BIS_NoSelectableStorage>
+  <BIS_Settings_DefaultNewBillMode>Default ingredient search for new Bills</BIS_Settings_DefaultNewBillMode>
+  <BIS_Settings_DefaultNewBillMode_Vanilla>No storage selected (Vanilla)</BIS_Settings_DefaultNewBillMode_Vanilla>
+  <BIS_Settings_DefaultNewBillMode_AllStorages>Look Everywhere (all storages/zones)</BIS_Settings_DefaultNewBillMode_AllStorages>
+</LanguageData>
