@@ -8,7 +8,7 @@ using Verse;
 namespace BillIngredientSource {
 	[HarmonyPatch(typeof(Dialog_BillConfig), "DoWindowContents")]
 	public static class Patch_Dialog_BillConfig_DoWindowContents {
-		public static void Prefix(Dialog_BillConfig __instance, ref float __state) {
+		public static void Prefix(Dialog_BillConfig __instance, Rect inRect, ref float __state) {
 			Bill_Production bill = Traverse.Create(__instance).Field("bill").GetValue<Bill_Production>();
 			__state = -1f;
 
@@ -19,9 +19,60 @@ namespace BillIngredientSource {
 				return;
 			}
 
-			// 바닐라 반경 링/반경 UI의 실질적 동작을 죽이기 위해 잠시 0으로 바꿈
+			// 바닐라 반경 링 약화
 			__state = bill.ingredientSearchRadius;
 			bill.ingredientSearchRadius = 0f;
+
+			Map map = GetBillMap(bill);
+			bool hasIngredientFilter = HasIngredientFilterPanel(bill);
+
+			Rect vanillaRadiusRect = GetVanillaRadiusRect(inRect, hasIngredientFilter);
+			Rect storageButtonRect = GetStorageButtonRect(vanillaRadiusRect, hasIngredientFilter);
+
+			HandleStorageButtonClick(storageButtonRect, data, map);
+			BlockVanillaRadiusInput(vanillaRadiusRect, storageButtonRect);
+		}
+
+		private static void HandleStorageButtonClick(Rect rect, BillData data, Map map) {
+			Event e = Event.current;
+			if (e == null) return;
+
+			if (e.type != EventType.MouseDown || e.button != 0) {
+				return;
+			}
+
+			if (!rect.Contains(e.mousePosition)) {
+				return;
+			}
+
+			List<FloatMenuOption> options = BuildStorageOptions(data, map);
+			Find.WindowStack.Add(new FloatMenu(options));
+			e.Use();
+		}
+
+		private static void BlockVanillaRadiusInput(Rect vanillaRadiusRect, Rect storageButtonRect) {
+			Event e = Event.current;
+			if (e == null) return;
+
+			if (!vanillaRadiusRect.Contains(e.mousePosition)) {
+				return;
+			}
+
+			// 버튼 자체 클릭은 HandleStorageButtonClick에서 처리
+			if (storageButtonRect.Contains(e.mousePosition)) {
+				return;
+			}
+
+			switch (e.type) {
+			case EventType.MouseDown:
+			case EventType.MouseUp:
+			case EventType.MouseDrag:
+			case EventType.ScrollWheel:
+			case EventType.DragUpdated:
+			case EventType.DragPerform:
+				e.Use();
+				break;
+			}
 		}
 
 		public static void Postfix(Dialog_BillConfig __instance, Rect inRect, float __state) {
@@ -40,7 +91,7 @@ namespace BillIngredientSource {
 
 			Rect modeRowRect = GetModeRowRect(inRect, hasIngredientFilter);
 			Rect vanillaRadiusRect = GetVanillaRadiusRect(inRect, hasIngredientFilter);
-			Rect storageButtonRect = GetStorageButtonRect(vanillaRadiusRect);
+			Rect storageButtonRect = GetStorageButtonRect(vanillaRadiusRect, hasIngredientFilter);
 
 			// 저장소 모드일 때:
 			// 1) 드래그/스크롤/클릭 이벤트 먹기
@@ -91,64 +142,66 @@ namespace BillIngredientSource {
 				? "재료 저장소 선택"
 				: "재료 저장소: " + selectedLabel;
 
-			if (Widgets.ButtonText(rect, buttonLabel)) {
-				List<FloatMenuOption> options = new List<FloatMenuOption>();
+			Widgets.ButtonText(rect, buttonLabel);
+		}
 
-				options.Add(new FloatMenuOption("(모든 저장소)", delegate {
-					data.SelectedStorageId = BillData.AllStoragesId;
-					data.SelectedZoneId = -1;
-					data.SelectedZoneLabel = "(모든 저장소)";
-					Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
-				}));
+		private static List<FloatMenuOption> BuildStorageOptions(BillData data, Map map) {
+			List<FloatMenuOption> options = new List<FloatMenuOption>();
 
-				if (map != null) {
-					List<Zone_Stockpile> zones = map.zoneManager.AllZones
-						.OfType<Zone_Stockpile>()
-						.OrderBy(z => z.label)
-						.ToList();
+			options.Add(new FloatMenuOption("(모든 저장소)", delegate {
+				data.SelectedStorageId = BillData.AllStoragesId;
+				data.SelectedZoneId = -1;
+				data.SelectedZoneLabel = "(모든 저장소)";
+				Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
+			}));
 
-					foreach (Zone_Stockpile zone in zones) {
-						Zone_Stockpile localZone = zone;
+			if (map != null) {
+				List<Zone_Stockpile> zones = map.zoneManager.AllZones
+					.OfType<Zone_Stockpile>()
+					.OrderBy(z => z.label)
+					.ToList();
 
-						if (string.IsNullOrWhiteSpace(localZone.label)) {
-							continue;
-						}
+				foreach (Zone_Stockpile zone in zones) {
+					Zone_Stockpile localZone = zone;
 
-						string optionLabel = "[구역] " + localZone.label;
-
-						options.Add(new FloatMenuOption(optionLabel, delegate {
-							data.SelectedZoneId = localZone.ID;
-							data.SelectedZoneLabel = localZone.label;
-							data.SelectedStorageId = "Zone_" + localZone.ID;
-							Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
-						}));
+					if (string.IsNullOrWhiteSpace(localZone.label)) {
+						continue;
 					}
 
-					foreach (SlotGroup slotGroup in StorageIngredientSource.GetAllStorageSlotGroups(map)) {
-						SlotGroup localSlotGroup = slotGroup;
-						string storageLabel = StorageIngredientSource.GetSlotGroupLabel(localSlotGroup);
+					string optionLabel = "[구역] " + localZone.label;
 
-						if (string.IsNullOrWhiteSpace(storageLabel)) {
-							continue;
-						}
+					options.Add(new FloatMenuOption(optionLabel, delegate {
+						data.SelectedZoneId = localZone.ID;
+						data.SelectedZoneLabel = localZone.label;
+						data.SelectedStorageId = "Zone_" + localZone.ID;
+						Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
+					}));
+				}
 
-						string optionLabel = "[저장소] " + storageLabel;
+				foreach (SlotGroup slotGroup in StorageIngredientSource.GetAllStorageSlotGroups(map)) {
+					SlotGroup localSlotGroup = slotGroup;
+					string storageLabel = StorageIngredientSource.GetSlotGroupLabel(localSlotGroup);
 
-						options.Add(new FloatMenuOption(optionLabel, delegate {
-							data.SelectedZoneId = -1;
-							data.SelectedZoneLabel = storageLabel;
-							data.SelectedStorageId = StorageIngredientSource.GetSlotGroupStorageId(localSlotGroup);
-							Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
-						}));
+					if (string.IsNullOrWhiteSpace(storageLabel)) {
+						continue;
 					}
-				}
 
-				if (options.Count == 0) {
-					options.Add(new FloatMenuOption("(선택 가능한 저장소 없음)", null));
-				}
+					string optionLabel = "[저장소] " + storageLabel;
 
-				Find.WindowStack.Add(new FloatMenu(options));
+					options.Add(new FloatMenuOption(optionLabel, delegate {
+						data.SelectedZoneId = -1;
+						data.SelectedZoneLabel = storageLabel;
+						data.SelectedStorageId = StorageIngredientSource.GetSlotGroupStorageId(localSlotGroup);
+						Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
+					}));
+				}
 			}
+
+			if (options.Count == 0) {
+				options.Add(new FloatMenuOption("(선택 가능한 저장소 없음)", null));
+			}
+
+			return options;
 		}
 
 		private static void DrawAndBlockVanillaRadiusArea(Rect vanillaRadiusRect, Rect storageButtonRect) {
@@ -226,16 +279,20 @@ namespace BillIngredientSource {
 
 		private static Rect GetVanillaRadiusRect(Rect inRect, bool hasIngredientFilter) {
 			if (hasIngredientFilter) {
-				// 하단의 "재료 탐색 범위: ..." + 슬라이더 줄
-				return new Rect(inRect.xMax - 323f, inRect.yMax - 67f, 306f, 46f);
+				// 하단 "재료 탐색 범위" 라벨 + 슬라이더 영역
+				return new Rect(inRect.xMax - 319f, inRect.yMax - 66f, 294f, 44f);
 			}
 
-			// 우측 상단의 반경 라벨/슬라이더 영역
-			return new Rect(inRect.xMax - 325f, inRect.y + 18f, 310f, 78f);
+			// 우측 상단 반경 영역
+			return new Rect(inRect.xMax - 314f, inRect.y + 32f, 286f, 58f);
 		}
 
-		private static Rect GetStorageButtonRect(Rect vanillaRadiusRect) {
-			return new Rect(vanillaRadiusRect.x + 2f, vanillaRadiusRect.y + 2f, vanillaRadiusRect.width - 4f, 28f);
+		private static Rect GetStorageButtonRect(Rect vanillaRadiusRect, bool hasIngredientFilter) {
+			if (hasIngredientFilter) {
+				return new Rect(vanillaRadiusRect.x + 6f, vanillaRadiusRect.y + 4f, vanillaRadiusRect.width - 12f, 26f);
+			}
+
+			return new Rect(vanillaRadiusRect.x + 6f, vanillaRadiusRect.y + 16f, vanillaRadiusRect.width - 12f, 26f);
 		}
 
 		private static Map GetBillMap(Bill_Production bill) {

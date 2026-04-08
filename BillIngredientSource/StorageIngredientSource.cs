@@ -168,9 +168,18 @@ namespace BillIngredientSource {
 				return false;
 			}
 
-			string label = storage.label;
+			string label = storage.LabelCap;
+			string defaultLabel = storage.def?.label;
 
-			return !string.IsNullOrWhiteSpace(label);
+			if (string.IsNullOrWhiteSpace(label)) {
+				return false;
+			}
+
+			if (string.IsNullOrWhiteSpace(defaultLabel)) {
+				return true;
+			}
+
+			return !label.Equals(defaultLabel, StringComparison.OrdinalIgnoreCase);
 		}
 
 		public static string GetSlotGroupStorageId(SlotGroup slotGroup) {
@@ -188,7 +197,19 @@ namespace BillIngredientSource {
 			}
 
 			if (slotGroup.parent is Building_Storage storage) {
-				return string.IsNullOrWhiteSpace(storage.label) ? null : storage.label;
+				string label = storage.LabelCap;
+				string defaultLabel = storage.def?.label;
+
+				if (string.IsNullOrWhiteSpace(label)) {
+					return null;
+				}
+
+				if (!string.IsNullOrWhiteSpace(defaultLabel) &&
+					label.Equals(defaultLabel, StringComparison.OrdinalIgnoreCase)) {
+					return null;
+				}
+
+				return label;
 			}
 
 			return null;
