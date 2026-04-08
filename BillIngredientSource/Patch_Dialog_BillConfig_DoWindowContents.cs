@@ -22,6 +22,16 @@ namespace BillIngredientSource {
 				? IngredientSearchMode.Storage
 				: IngredientSearchMode.Radius;
 
+			Map map = GetBillMap(bill);
+			bool hasIngredientFilter = HasIngredientFilterPanel(bill);
+
+			Rect vanillaRadiusRect = GetVanillaRadiusRect(inRect, hasIngredientFilter);
+			Rect storageButtonRect = GetStorageButtonRect(vanillaRadiusRect, hasIngredientFilter);
+
+			// 버튼 클릭은 항상 처리
+			HandleStorageButtonClick(storageButtonRect, bill, data, map);
+
+			// 저장소 사용 중일 때만 반경 차단/0처리
 			if (!useStorage) {
 				return;
 			}
@@ -29,13 +39,6 @@ namespace BillIngredientSource {
 			__state = bill.ingredientSearchRadius;
 			bill.ingredientSearchRadius = 0f;
 
-			Map map = GetBillMap(bill);
-			bool hasIngredientFilter = HasIngredientFilterPanel(bill);
-
-			Rect vanillaRadiusRect = GetVanillaRadiusRect(inRect, hasIngredientFilter);
-			Rect storageButtonRect = GetStorageButtonRect(vanillaRadiusRect, hasIngredientFilter);
-
-			HandleStorageButtonClick(storageButtonRect, bill, data, map);
 			BlockVanillaRadiusInput(vanillaRadiusRect, storageButtonRect);
 		}
 
@@ -107,37 +110,6 @@ namespace BillIngredientSource {
 			if (useStorage) {
 				DrawAndBlockVanillaRadiusArea(vanillaRadiusRect, storageButtonRect);
 			}
-		}
-
-		private static void DrawModeRow(Rect rowRect, BillData data) {
-			float labelWidth = 120f;
-			float radioSize = 24f;
-			float gap = 8f;
-
-			Rect labelRect = new Rect(rowRect.x, rowRect.y, labelWidth, rowRect.height);
-			Widgets.Label(labelRect, "재료 탐색 방식");
-
-			float x = labelRect.xMax + 6f;
-
-			Rect radiusButtonRect = new Rect(x, rowRect.y + 3f, radioSize, radioSize);
-			bool radiusSelected = data.SearchMode == IngredientSearchMode.Radius;
-			if (Widgets.RadioButton(radiusButtonRect.position, radiusSelected)) {
-				data.SearchMode = IngredientSearchMode.Radius;
-			}
-
-			Rect radiusLabelRect = new Rect(radiusButtonRect.xMax + 4f, rowRect.y, 34f, rowRect.height);
-			Widgets.Label(radiusLabelRect, "반경");
-
-			x = radiusLabelRect.xMax + gap;
-
-			Rect storageButtonRect = new Rect(x, rowRect.y + 3f, radioSize, radioSize);
-			bool storageSelected = data.SearchMode == IngredientSearchMode.Storage;
-			if (Widgets.RadioButton(storageButtonRect.position, storageSelected)) {
-				data.SearchMode = IngredientSearchMode.Storage;
-			}
-
-			Rect storageLabelRect = new Rect(storageButtonRect.xMax + 4f, rowRect.y, 42f, rowRect.height);
-			Widgets.Label(storageLabelRect, "저장소");
 		}
 
 		private static void DrawStorageButton(Rect rect, BillData data, Map map) {
@@ -295,11 +267,11 @@ namespace BillIngredientSource {
 		private static Rect GetVanillaRadiusRect(Rect inRect, bool hasIngredientFilter) {
 			if (hasIngredientFilter) {
 				// 하단 "재료 탐색 범위" 라벨 + 슬라이더 영역
-				return new Rect(inRect.xMax - 300f, inRect.yMax - 20f, 280f, 60f);
+				return new Rect(inRect.xMax - 290f, inRect.yMax - 20f, 280f, 40f);
 			}
 
 			// 우측 상단 반경 영역
-			return new Rect(inRect.xMax - 300f, inRect.y + 90f, 280f, 60f);
+			return new Rect(inRect.xMax - 290f, inRect.y + 90f, 280f, 40f);
 		}
 
 		private static Rect GetStorageButtonRect(Rect vanillaRadiusRect, bool hasIngredientFilter) {
