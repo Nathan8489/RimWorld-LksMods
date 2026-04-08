@@ -3,8 +3,11 @@
   <BIS_NoStorageSelected>저장구역 선택안함(바닐라)</BIS_NoStorageSelected>
   <BIS_AllStorages>모든 저장구역 포함</BIS_AllStorages>
   <BIS_ZonePrefix>[구역] {0}</BIS_ZonePrefix>
-  <BIS_StoragePrefix>[저장소] {0}</BIS_StoragePrefix>
+  <BIS_StoragePrefix>[저장] {0}</BIS_StoragePrefix>
   <BIS_OnlyIncluded>{0}만 포함</BIS_OnlyIncluded>
   <BIS_Incompatible>{0} (호환되지 않음)</BIS_Incompatible>
   <BIS_NoSelectableStorage>(선택 가능한 저장소 없음)</BIS_NoSelectableStorage>
+  <BIS_Settings_DefaultNewBillMode>신규 Bill의 재료 탐색 기본값</BIS_Settings_DefaultNewBillMode>
+  <BIS_Settings_DefaultNewBillMode_Vanilla>저장구역 선택안함(바닐라)</BIS_Settings_DefaultNewBillMode_Vanilla>
+  <BIS_Settings_DefaultNewBillMode_AllStorages>모든 저장구역 포함</BIS_Settings_DefaultNewBillMode_AllStorages>
 </LanguageData>
