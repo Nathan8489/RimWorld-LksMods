@@ -194,7 +194,7 @@ namespace BillIngredientSource {
 					if (!tmpGroups[storageGroup.GroupingLabel].Contains(storageGroup)) {
 						tmpGroups[storageGroup.GroupingLabel].Add(storageGroup);
 					}
-				} else if (!(slotGroup.parent is Building_Storage buildingStorage) || buildingStorage is IRenameable) {
+				} else if (slotGroup.parent is Building_Storage buildingStorage && buildingStorage is IRenameable) {
 					if (!tmpGroups.ContainsKey(slotGroup.GroupingLabel)) {
 						tmpGroups.Add(slotGroup.GroupingLabel, new List<ISlotGroup>());
 					}
