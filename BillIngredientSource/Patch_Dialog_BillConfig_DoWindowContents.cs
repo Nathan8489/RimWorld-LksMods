@@ -156,7 +156,7 @@ namespace BillIngredientSource {
 						continue;
 					}
 
-					string optionLabel = Tr("BIS_ZoneOption", localZone.label);
+					string optionLabel = Tr("BIS_ZonePrefix", localZone.label);
 
 					options.Add(new FloatMenuOption(optionLabel, delegate {
 						data.SelectedZoneId = localZone.ID;
@@ -175,7 +175,7 @@ namespace BillIngredientSource {
 					}
 
 					bool compatible = StorageIngredientSource.IsStorageCompatibleWithBill(bill, map, localGroup);
-					string baseLabel = Tr("BIS_StorageOption", storageLabel);
+					string baseLabel = Tr("BIS_StoragePrefix", storageLabel);
 					string optionLabel = compatible
 						? baseLabel
 						: Tr("BIS_Incompatible", baseLabel);
@@ -183,7 +183,7 @@ namespace BillIngredientSource {
 					options.Add(new FloatMenuOption(optionLabel, compatible ? (Action)delegate {
 						data.SelectedZoneId = -1;
 						data.SelectedZoneLabel = storageLabel;
-						data.SelectedStorageId = StorageIngredientSource.GetStorageGroupId(localGroup);
+						data.SelectedStorageId = StorageIngredientSource.GetStorageGroupId(map, localGroup); 
 						Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
 					}
 					: null));

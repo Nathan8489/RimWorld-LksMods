@@ -38,9 +38,8 @@ namespace BillIngredientSource {
 				return result;
 			}
 
-			if (data.SelectedStorageId.StartsWith(BISIds.StorageGroupPrefix)) {
-				string groupingLabel = data.SelectedStorageId.Substring(BISIds.StorageGroupPrefix.Length);
-				ISlotGroup group = FindStorageGroupByGroupingLabel(map, groupingLabel);
+			if (data.SelectedStorageId.StartsWith(BISIds.StorageGroupCellPrefix)) {
+				ISlotGroup group = FindStorageGroupByCellId(map, data.SelectedStorageId);
 				if (group != null) {
 					AddISlotGroupThings(map, group, result, seenThingIds);
 				}
@@ -56,6 +55,32 @@ namespace BillIngredientSource {
 			}
 
 			return result;
+		}
+
+		private static ISlotGroup FindStorageGroupByCellId(Map map, string storageId) {
+			if (map == null || string.IsNullOrEmpty(storageId) || !storageId.StartsWith(BISIds.StorageGroupCellPrefix)) {
+				return null;
+			}
+
+			string[] parts = storageId.Split('_');
+			if (parts.Length != 3) {
+				return null;
+			}
+
+			if (!int.TryParse(parts[1], out int x)) return null;
+			if (!int.TryParse(parts[2], out int z)) return null;
+
+			IntVec3 target = new IntVec3(x, 0, z);
+
+			List<SlotGroup> allGroups = map.haulDestinationManager.AllGroupsListInPriorityOrder;
+			for (int i = 0; i < allGroups.Count; i++) {
+				SlotGroup sg = allGroups[i];
+				if (sg.CellsList.Contains(target)) {
+					return sg.StorageGroup ?? (ISlotGroup)sg;
+				}
+			}
+
+			return null;
 		}
 
 		private static void AddAllStorageThings(Map map, List<Thing> result, HashSet<int> seenThingIds) {
@@ -130,9 +155,8 @@ namespace BillIngredientSource {
 				return "(없어진 저장구역)";
 			}
 
-			if (map != null && storageId.StartsWith(BISIds.StorageGroupPrefix)) {
-				string groupingLabel = storageId.Substring(BISIds.StorageGroupPrefix.Length);
-				ISlotGroup group = FindStorageGroupByGroupingLabel(map, groupingLabel);
+			if (map != null && storageId.StartsWith(BISIds.StorageGroupCellPrefix)) {
+				ISlotGroup group = FindStorageGroupByCellId(map, storageId);
 				if (group != null) {
 					return SlotGroup.GetGroupLabel(group);
 				}
@@ -184,17 +208,23 @@ namespace BillIngredientSource {
 				.SelectMany(kvp => kvp.Value);
 		}
 
-		public static string GetStorageGroupId(ISlotGroup group) {
+		public static string GetStorageGroupId(Map map, ISlotGroup group) {
 			if (group == null) {
 				return null;
 			}
 
-			// 연결 선반 그룹
-			if (group is StorageGroup storageGroup) {
-				return BISIds.StorageGroupPrefix + storageGroup.GroupingLabel;
+			if (group is StorageGroup) {
+				List<SlotGroup> allGroups = map.haulDestinationManager.AllGroupsListInPriorityOrder;
+				for (int i = 0; i < allGroups.Count; i++) {
+					SlotGroup sg = allGroups[i];
+					if (sg.StorageGroup == group) {
+						IntVec3 cell = sg.CellsList.Any() ? sg.CellsList[0] : IntVec3.Invalid;
+						return BISIds.StorageGroupCellPrefix + cell.x + "_" + cell.z;
+					}
+				}
+				return null;
 			}
 
-			// 단일 SlotGroup
 			if (group is SlotGroup slotGroup) {
 				Zone_Stockpile zone = slotGroup.parent as Zone_Stockpile;
 				if (zone != null) {

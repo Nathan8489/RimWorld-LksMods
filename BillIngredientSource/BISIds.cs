@@ -11,5 +11,6 @@ namespace BillIngredientSource {
 		public const string BuildingPrefix = "Building_";
 		public const string SlotGroupPrefix = "SlotGroup_";
 		public const string StorageGroupPrefix = "StorageGroup_";
+		public const string StorageGroupCellPrefix = "StorageGroupCell_";
 	}
 }
