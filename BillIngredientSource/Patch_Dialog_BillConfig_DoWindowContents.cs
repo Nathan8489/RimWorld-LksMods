@@ -113,10 +113,15 @@ namespace BillIngredientSource {
 		}
 
 		private static void DrawStorageButton(Rect rect, BillData data, Map map) {
-			string selectedLabel = StorageIngredientSource.GetStorageLabel(map, data.SelectedStorageId, data.SelectedZoneLabel);
-			string buttonLabel = string.IsNullOrEmpty(selectedLabel)
-				? "저장구역 선택안함(바닐라)"
-				: selectedLabel + "만 포함";
+			string buttonLabel;
+			if (data.SelectedStorageId == BISIds.AllStorages) {
+				buttonLabel = "모든 저장구역 포함";
+			} else {
+				string selectedLabel = StorageIngredientSource.GetStorageLabel(map, data.SelectedStorageId, data.SelectedZoneLabel);
+				buttonLabel = string.IsNullOrEmpty(selectedLabel)
+					? "저장구역 선택안함(바닐라)"
+					: selectedLabel + "만 포함";
+			}
 
 			Widgets.ButtonText(rect, buttonLabel);
 		}
@@ -132,7 +137,7 @@ namespace BillIngredientSource {
 			}));
 
 			options.Add(new FloatMenuOption("모든 저장구역 포함", delegate {
-				data.SelectedStorageId = BillData.AllStoragesId;
+				data.SelectedStorageId = BISIds.AllStorages;
 				data.SelectedZoneId = -1;
 				data.SelectedZoneLabel = "모든 저장구역";
 				Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
@@ -156,7 +161,7 @@ namespace BillIngredientSource {
 					options.Add(new FloatMenuOption(optionLabel, delegate {
 						data.SelectedZoneId = localZone.ID;
 						data.SelectedZoneLabel = localZone.label;
-						data.SelectedStorageId = "Zone_" + localZone.ID;
+						data.SelectedStorageId = BISIds.ZonePrefix + localZone.ID;
 						Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
 					}));
 				}
@@ -252,30 +257,18 @@ namespace BillIngredientSource {
 			}
 		}
 
-		private static Rect GetModeRowRect(Rect inRect, bool hasIngredientFilter) {
-			if (hasIngredientFilter) {
-				// 재료 필터가 있는 경우:
-				// 우측 재료 설정 열의 마지막 줄 위치
-				return new Rect(inRect.xMax - 290f, inRect.yMax - 118f, 270f, 30f);
-			}
-
-			// 재료 필터가 없는 경우:
-			// 우측 상단의 재료 탐색 범위 아래
-			return new Rect(inRect.xMax - 290f, inRect.y + 58f, 270f, 30f);
-		}
-
 		private static Rect GetVanillaRadiusRect(Rect inRect, bool hasIngredientFilter) {
 			if (hasIngredientFilter) {
 				// 하단 "재료 탐색 범위" 라벨 + 슬라이더 영역
-				return new Rect(inRect.xMax - 290f, inRect.yMax - 20f, 280f, 40f);
+				return new Rect(inRect.xMax - BISUI.RadiusAreaRightOffset, inRect.yMax - BISUI.HasFilterBottomOffset, BISUI.RadiusAreaWidth, BISUI.RadiusAreaHeight);
 			}
 
 			// 우측 상단 반경 영역
-			return new Rect(inRect.xMax - 290f, inRect.y + 90f, 280f, 40f);
+			return new Rect(inRect.xMax - BISUI.RadiusAreaRightOffset, inRect.y + BISUI.NoFilterY, BISUI.RadiusAreaWidth, BISUI.RadiusAreaHeight);
 		}
 
 		private static Rect GetStorageButtonRect(Rect vanillaRadiusRect, bool hasIngredientFilter) {
-			return new Rect(vanillaRadiusRect.x + 6f, vanillaRadiusRect.y + 4f, vanillaRadiusRect.width - 12f, vanillaRadiusRect.height - 8f);
+			return new Rect(vanillaRadiusRect.x + BISUI.ButtonInsetX, vanillaRadiusRect.y + BISUI.ButtonInsetY, vanillaRadiusRect.width - BISUI.ButtonInsetWidth, vanillaRadiusRect.height - BISUI.ButtonInsetHeight);
 		}
 
 		private static Map GetBillMap(Bill_Production bill) {

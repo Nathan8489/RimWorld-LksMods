@@ -67,6 +67,8 @@
   <ItemGroup>
     <Compile Include="BillData.cs" />
     <Compile Include="BillDataStore.cs" />
+    <Compile Include="BISIds.cs" />
+    <Compile Include="BISUI.cs" />
     <Compile Include="IngredientSearchMode.cs" />
     <Compile Include="Init.cs" />
     <Compile Include="Patch_Bill_Production_ExposeData.cs" />

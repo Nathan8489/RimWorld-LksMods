@@ -2,8 +2,6 @@ using Verse;
 
 namespace BillIngredientSource {
 	public class BillData : IExposable {
-		public const string AllStoragesId = "__ALL_STORAGES__";
-
 		public IngredientSearchMode SearchMode = IngredientSearchMode.Radius;
 
 		// 선택된 저장소 식별자

@@ -25,15 +25,15 @@ namespace BillIngredientSource {
 			HashSet<int> seenThingIds = new HashSet<int>();
 
 			// 모든 저장소
-			if (data.SelectedStorageId == BillData.AllStoragesId) {
+			if (data.SelectedStorageId == BISIds.AllStorages) {
 				AddAllStorageThings(map, result, seenThingIds);
 				return result;
 			}
 
 			// 특정 zone
-			if (!string.IsNullOrEmpty(data.SelectedStorageId) && data.SelectedStorageId.StartsWith("Zone_")) {
+			if (!string.IsNullOrEmpty(data.SelectedStorageId) && data.SelectedStorageId.StartsWith(BISIds.ZonePrefix)) {
 				int zoneId;
-				if (TryParseTailInt(data.SelectedStorageId, "Zone_", out zoneId)) {
+				if (TryParseTailInt(data.SelectedStorageId, BISIds.ZonePrefix, out zoneId)) {
 					Zone_Stockpile zone = FindZoneById(map, zoneId);
 					if (zone != null) {
 						AddSlotGroupThings(zone.GetSlotGroup(), result, seenThingIds);
@@ -43,9 +43,9 @@ namespace BillIngredientSource {
 			}
 
 			// 특정 storage building (선반 포함)
-			if (!string.IsNullOrEmpty(data.SelectedStorageId) && data.SelectedStorageId.StartsWith("Building_")) {
+			if (!string.IsNullOrEmpty(data.SelectedStorageId) && data.SelectedStorageId.StartsWith(BISIds.BuildingPrefix)) {
 				int thingId;
-				if (TryParseTailInt(data.SelectedStorageId, "Building_", out thingId)) {
+				if (TryParseTailInt(data.SelectedStorageId, BISIds.BuildingPrefix, out thingId)) {
 					Building_Storage storage = FindStorageBuildingByThingId(map, thingId);
 					if (storage != null) {
 						AddSlotGroupThings(storage.GetSlotGroup(), result, seenThingIds);
@@ -55,7 +55,7 @@ namespace BillIngredientSource {
 			}
 
 			// 특정 SlotGroup (연결 선반 포함)
-			if (!string.IsNullOrEmpty(data.SelectedStorageId) && data.SelectedStorageId.StartsWith("SlotGroup_")) {
+			if (!string.IsNullOrEmpty(data.SelectedStorageId) && data.SelectedStorageId.StartsWith(BISIds.SlotGroupPrefix)) {
 				SlotGroup slotGroup = FindSlotGroupByStorageId(map, data.SelectedStorageId);
 				if (slotGroup != null) {
 					AddSlotGroupThings(slotGroup, result, seenThingIds);
@@ -108,13 +108,13 @@ namespace BillIngredientSource {
 				return fallbackLabel;
 			}
 
-			if (storageId == BillData.AllStoragesId) {
+			if (storageId == BISIds.AllStorages) {
 				return "(모든 저장소)";
 			}
 
-			if (map != null && storageId.StartsWith("Zone_")) {
+			if (map != null && storageId.StartsWith(BISIds.ZonePrefix)) {
 				int zoneId;
-				if (TryParseTailInt(storageId, "Zone_", out zoneId)) {
+				if (TryParseTailInt(storageId, BISIds.ZonePrefix, out zoneId)) {
 					Zone_Stockpile zone = FindZoneById(map, zoneId);
 					if (zone != null) {
 						return string.IsNullOrEmpty(zone.label) ? "(이름 없음)" : zone.label;
@@ -123,9 +123,9 @@ namespace BillIngredientSource {
 				}
 			}
 
-			if (map != null && storageId.StartsWith("Building_")) {
+			if (map != null && storageId.StartsWith(BISIds.BuildingPrefix)) {
 				int thingId;
-				if (TryParseTailInt(storageId, "Building_", out thingId)) {
+				if (TryParseTailInt(storageId, BISIds.BuildingPrefix, out thingId)) {
 					Building_Storage storage = FindStorageBuildingByThingId(map, thingId);
 					if (storage != null) {
 						return GetStorageBuildingLabel(storage);
@@ -134,7 +134,7 @@ namespace BillIngredientSource {
 				}
 			}
 
-			if (map != null && storageId.StartsWith("SlotGroup_")) {
+			if (map != null && storageId.StartsWith(BISIds.SlotGroupPrefix)) {
 				SlotGroup slotGroup = FindSlotGroupByStorageId(map, storageId);
 				if (slotGroup != null) {
 					return GetSlotGroupLabel(slotGroup);
@@ -160,16 +160,8 @@ namespace BillIngredientSource {
 		}
 
 		private static bool HasCustomStorageGroupLabel(SlotGroup slotGroup) {
-			if (slotGroup == null) {
-				return false;
-			}
-
-			if (!(slotGroup.parent is Building_Storage storage)) {
-				return false;
-			}
-
-			string customLabel = storage.label;
-			return !string.IsNullOrWhiteSpace(customLabel);
+			string label;
+			return TryGetCustomStorageGroupLabel(slotGroup, out label);
 		}
 
 		public static string GetSlotGroupStorageId(SlotGroup slotGroup) {
@@ -178,7 +170,7 @@ namespace BillIngredientSource {
 			}
 
 			IntVec3 cell = slotGroup.CellsList.Any() ? slotGroup.CellsList[0] : IntVec3.Invalid;
-			return "SlotGroup_" + cell.x + "_" + cell.z;
+			return BISIds.SlotGroupPrefix + cell.x + "_" + cell.z;
 		}
 
 		public static string GetSlotGroupLabel(SlotGroup slotGroup) {
@@ -186,11 +178,40 @@ namespace BillIngredientSource {
 				return "(없음)";
 			}
 
-			if (slotGroup.parent is Building_Storage storage) {
-				return string.IsNullOrWhiteSpace(storage.label) ? null : storage.label;
+			string label;
+			return TryGetCustomStorageGroupLabel(slotGroup, out label) ? label : null;
+		}
+
+		private static bool TryGetCustomStorageGroupLabel(SlotGroup slotGroup, out string label) {
+			label = null;
+
+			if (slotGroup == null) {
+				return false;
 			}
 
-			return null;
+			if (!(slotGroup.parent is Building_Storage storage)) {
+				return false;
+			}
+
+			// 1순위: 직접 지정된 커스텀 이름
+			if (!string.IsNullOrWhiteSpace(storage.label)) {
+				label = storage.label;
+				return true;
+			}
+
+			// 2순위: 표시 라벨이 기본 def 라벨과 다르면 커스텀 이름으로 간주
+			string capLabel = storage.LabelCap;
+			string defLabel = storage.def?.label;
+
+			if (!string.IsNullOrWhiteSpace(capLabel)) {
+				if (string.IsNullOrWhiteSpace(defLabel) ||
+					!capLabel.Equals(defLabel, StringComparison.OrdinalIgnoreCase)) {
+					label = capLabel;
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		public static IEnumerable<Building_Storage> GetAllStorageBuildings(Map map) {
@@ -214,7 +235,7 @@ namespace BillIngredientSource {
 			}
 
 			IntVec3 cell = slotGroup.CellsList.Any() ? slotGroup.CellsList[0] : storage.Position;
-			return "SlotGroup_" + cell.x + "_" + cell.z;
+			return BISIds.SlotGroupPrefix + cell.x + "_" + cell.z;
 		}
 
 		public static string GetStorageBuildingLabel(Building_Storage storage) {
@@ -243,7 +264,7 @@ namespace BillIngredientSource {
 		}
 
 		private static SlotGroup FindSlotGroupByStorageId(Map map, string storageId) {
-			if (map == null || string.IsNullOrEmpty(storageId) || !storageId.StartsWith("SlotGroup_")) {
+			if (map == null || string.IsNullOrEmpty(storageId) || !storageId.StartsWith(BISIds.SlotGroupPrefix)) {
 				return null;
 			}
 

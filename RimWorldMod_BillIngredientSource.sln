@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.37111.16 d17.14
+VisualStudioVersion = 17.14.37111.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BillIngredientSource", "BillIngredientSource\BillIngredientSource.csproj", "{835CD97F-2CC5-4DA9-82D0-1201B576FE32}"
 EndProject
@@ -20,6 +20,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Assemblies", "Assemblies", 
 		Assemblies\BillIngredientSource.dll = Assemblies\BillIngredientSource.dll
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Languages", "Languages", "{F7997A81-F398-4B19-A2E0-BE4C43B28BEF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Korean", "Korean", "{BE2F738A-F419-4CC2-B22A-E99BF56444FB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Keyed", "Keyed", "{758611E5-48AC-44A5-9F60-DBC70E0A970E}"
+	ProjectSection(SolutionItems) = preProject
+		Languages\Korean\Keyed\BillIngredientSource.xml = Languages\Korean\Keyed\BillIngredientSource.xml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +42,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BE2F738A-F419-4CC2-B22A-E99BF56444FB} = {F7997A81-F398-4B19-A2E0-BE4C43B28BEF}
+		{758611E5-48AC-44A5-9F60-DBC70E0A970E} = {BE2F738A-F419-4CC2-B22A-E99BF56444FB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {42FC11FA-85CA-4937-B5C6-AD9A21464410}
