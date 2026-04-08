@@ -24,9 +24,12 @@ namespace BillIngredientSource {
 				return true;
 			}
 
-			if (data.SearchMode != IngredientSearchMode.Storage) {
+			if (string.IsNullOrEmpty(data.SelectedStorageId)) {
+				data.SearchMode = IngredientSearchMode.Radius;
 				return true;
 			}
+
+			data.SearchMode = IngredientSearchMode.Storage;
 
 			__result = StorageIngredientSearch.TryFindBestBillIngredientsFromStorage(
 				productionBill,

@@ -168,18 +168,8 @@ namespace BillIngredientSource {
 				return false;
 			}
 
-			string label = storage.LabelCap;
-			string defaultLabel = storage.def?.label;
-
-			if (string.IsNullOrWhiteSpace(label)) {
-				return false;
-			}
-
-			if (string.IsNullOrWhiteSpace(defaultLabel)) {
-				return true;
-			}
-
-			return !label.Equals(defaultLabel, StringComparison.OrdinalIgnoreCase);
+			string customLabel = storage.label;
+			return !string.IsNullOrWhiteSpace(customLabel);
 		}
 
 		public static string GetSlotGroupStorageId(SlotGroup slotGroup) {
@@ -197,19 +187,7 @@ namespace BillIngredientSource {
 			}
 
 			if (slotGroup.parent is Building_Storage storage) {
-				string label = storage.LabelCap;
-				string defaultLabel = storage.def?.label;
-
-				if (string.IsNullOrWhiteSpace(label)) {
-					return null;
-				}
-
-				if (!string.IsNullOrWhiteSpace(defaultLabel) &&
-					label.Equals(defaultLabel, StringComparison.OrdinalIgnoreCase)) {
-					return null;
-				}
-
-				return label;
+				return string.IsNullOrWhiteSpace(storage.label) ? null : storage.label;
 			}
 
 			return null;
@@ -313,6 +291,39 @@ namespace BillIngredientSource {
 
 			string tail = value.Substring(prefix.Length);
 			return int.TryParse(tail, out number);
+		}
+
+		public static bool IsStorageCompatibleWithBill(Bill_Production bill, SlotGroup slotGroup) {
+			if (bill == null || slotGroup == null || bill.recipe?.ingredients == null) {
+				return false;
+			}
+
+			StorageSettings settings = slotGroup.Settings;
+			if (settings == null) {
+				return false;
+			}
+
+			ThingFilter storageFilter = settings.filter;
+			if (storageFilter == null) {
+				return false;
+			}
+
+			for (int i = 0; i < bill.recipe.ingredients.Count; i++) {
+				IngredientCount ingredient = bill.recipe.ingredients[i];
+				if (ingredient?.filter == null) {
+					continue;
+				}
+
+				List<ThingDef> defs = DefDatabase<ThingDef>.AllDefsListForReading;
+				for (int j = 0; j < defs.Count; j++) {
+					ThingDef def = defs[j];
+					if (ingredient.filter.Allows(def) && storageFilter.Allows(def)) {
+						return true;
+					}
+				}
+			}
+
+			return false;
 		}
 	}
 }

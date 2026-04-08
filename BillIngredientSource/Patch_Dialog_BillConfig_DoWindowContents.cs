@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using HarmonyLib;
+﻿using HarmonyLib;
 using RimWorld;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -15,11 +16,16 @@ namespace BillIngredientSource {
 			if (bill == null) return;
 
 			BillData data = BillDataStore.GetOrCreate(bill);
-			if (data.SearchMode != IngredientSearchMode.Storage) {
+			bool useStorage = !string.IsNullOrEmpty(data.SelectedStorageId);
+
+			data.SearchMode = useStorage
+				? IngredientSearchMode.Storage
+				: IngredientSearchMode.Radius;
+
+			if (!useStorage) {
 				return;
 			}
 
-			// 바닐라 반경 링 약화
 			__state = bill.ingredientSearchRadius;
 			bill.ingredientSearchRadius = 0f;
 
@@ -29,11 +35,11 @@ namespace BillIngredientSource {
 			Rect vanillaRadiusRect = GetVanillaRadiusRect(inRect, hasIngredientFilter);
 			Rect storageButtonRect = GetStorageButtonRect(vanillaRadiusRect, hasIngredientFilter);
 
-			HandleStorageButtonClick(storageButtonRect, data, map);
+			HandleStorageButtonClick(storageButtonRect, bill, data, map);
 			BlockVanillaRadiusInput(vanillaRadiusRect, storageButtonRect);
 		}
 
-		private static void HandleStorageButtonClick(Rect rect, BillData data, Map map) {
+		private static void HandleStorageButtonClick(Rect rect, Bill_Production bill, BillData data, Map map) {
 			Event e = Event.current;
 			if (e == null) return;
 
@@ -45,7 +51,7 @@ namespace BillIngredientSource {
 				return;
 			}
 
-			List<FloatMenuOption> options = BuildStorageOptions(data, map);
+			List<FloatMenuOption> options = BuildStorageOptions(bill, data, map);
 			Find.WindowStack.Add(new FloatMenu(options));
 			e.Use();
 		}
@@ -79,7 +85,6 @@ namespace BillIngredientSource {
 			Bill_Production bill = Traverse.Create(__instance).Field("bill").GetValue<Bill_Production>();
 			if (bill == null) return;
 
-			// Prefix에서 바꿨던 반경 복구
 			if (__state >= 0f) {
 				bill.ingredientSearchRadius = __state;
 			}
@@ -88,19 +93,18 @@ namespace BillIngredientSource {
 			Map map = GetBillMap(bill);
 
 			bool hasIngredientFilter = HasIngredientFilterPanel(bill);
+			bool useStorage = !string.IsNullOrEmpty(data.SelectedStorageId);
 
-			Rect modeRowRect = GetModeRowRect(inRect, hasIngredientFilter);
+			data.SearchMode = useStorage
+				? IngredientSearchMode.Storage
+				: IngredientSearchMode.Radius;
+
 			Rect vanillaRadiusRect = GetVanillaRadiusRect(inRect, hasIngredientFilter);
 			Rect storageButtonRect = GetStorageButtonRect(vanillaRadiusRect, hasIngredientFilter);
 
-			// 저장소 모드일 때:
-			// 1) 드래그/스크롤/클릭 이벤트 먹기
-			// 2) 그 자리에 저장소 버튼 배치
-			// 3) 바닐라 반경 라벨/슬라이더 영역 가리기
-			DrawModeRow(modeRowRect, data);
+			DrawStorageButton(storageButtonRect, data, map);
 
-			if (data.SearchMode == IngredientSearchMode.Storage) {
-				DrawStorageButton(storageButtonRect, data, map);
+			if (useStorage) {
 				DrawAndBlockVanillaRadiusArea(vanillaRadiusRect, storageButtonRect);
 			}
 		}
@@ -139,19 +143,26 @@ namespace BillIngredientSource {
 		private static void DrawStorageButton(Rect rect, BillData data, Map map) {
 			string selectedLabel = StorageIngredientSource.GetStorageLabel(map, data.SelectedStorageId, data.SelectedZoneLabel);
 			string buttonLabel = string.IsNullOrEmpty(selectedLabel)
-				? "재료 저장소 선택"
-				: "재료 저장소: " + selectedLabel;
+				? "저장구역 선택안함(바닐라)"
+				: selectedLabel + "만 포함";
 
 			Widgets.ButtonText(rect, buttonLabel);
 		}
 
-		private static List<FloatMenuOption> BuildStorageOptions(BillData data, Map map) {
+		private static List<FloatMenuOption> BuildStorageOptions(Bill_Production bill, BillData data, Map map) {
 			List<FloatMenuOption> options = new List<FloatMenuOption>();
 
-			options.Add(new FloatMenuOption("(모든 저장소)", delegate {
+			options.Add(new FloatMenuOption("저장구역 선택안함(바닐라)", delegate {
+				data.SelectedStorageId = null;
+				data.SelectedZoneId = -1;
+				data.SelectedZoneLabel = null;
+				data.SearchMode = IngredientSearchMode.Radius;
+			}));
+
+			options.Add(new FloatMenuOption("모든 저장구역 포함", delegate {
 				data.SelectedStorageId = BillData.AllStoragesId;
 				data.SelectedZoneId = -1;
-				data.SelectedZoneLabel = "(모든 저장소)";
+				data.SelectedZoneLabel = "모든 저장구역";
 				Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
 			}));
 
@@ -186,14 +197,18 @@ namespace BillIngredientSource {
 						continue;
 					}
 
-					string optionLabel = "[저장소] " + storageLabel;
+					bool compatible = StorageIngredientSource.IsStorageCompatibleWithBill(bill, localSlotGroup);
+					string optionLabel = compatible
+						? "[저장소] " + storageLabel
+						: "[저장소] " + storageLabel + " (호환되지 않음)";
 
-					options.Add(new FloatMenuOption(optionLabel, delegate {
+					options.Add(new FloatMenuOption(optionLabel, compatible ? (Action)delegate {
 						data.SelectedZoneId = -1;
 						data.SelectedZoneLabel = storageLabel;
 						data.SelectedStorageId = StorageIngredientSource.GetSlotGroupStorageId(localSlotGroup);
 						Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
-					}));
+					}
+					: null));
 				}
 			}
 
@@ -280,19 +295,15 @@ namespace BillIngredientSource {
 		private static Rect GetVanillaRadiusRect(Rect inRect, bool hasIngredientFilter) {
 			if (hasIngredientFilter) {
 				// 하단 "재료 탐색 범위" 라벨 + 슬라이더 영역
-				return new Rect(inRect.xMax - 319f, inRect.yMax - 66f, 294f, 44f);
+				return new Rect(inRect.xMax - 300f, inRect.yMax - 20f, 280f, 60f);
 			}
 
 			// 우측 상단 반경 영역
-			return new Rect(inRect.xMax - 314f, inRect.y + 32f, 286f, 58f);
+			return new Rect(inRect.xMax - 300f, inRect.y + 90f, 280f, 60f);
 		}
 
 		private static Rect GetStorageButtonRect(Rect vanillaRadiusRect, bool hasIngredientFilter) {
-			if (hasIngredientFilter) {
-				return new Rect(vanillaRadiusRect.x + 6f, vanillaRadiusRect.y + 4f, vanillaRadiusRect.width - 12f, 26f);
-			}
-
-			return new Rect(vanillaRadiusRect.x + 6f, vanillaRadiusRect.y + 16f, vanillaRadiusRect.width - 12f, 26f);
+			return new Rect(vanillaRadiusRect.x + 6f, vanillaRadiusRect.y + 4f, vanillaRadiusRect.width - 12f, vanillaRadiusRect.height - 8f);
 		}
 
 		private static Map GetBillMap(Bill_Production bill) {
