@@ -7,10 +7,10 @@
     Control Bill ingredient search by storage instead of radius.
 
     Select a storage → use only its contents
-    Select "All Storages" → use all stored items
+    Select "Look Everywhere" → use all stored items
     No selection → vanilla radius
 
-    New bills default to "All Storages" (configurable)
+    New bills default to "Look Everywhere" (configurable)
     (Items outside storages are ignored)
 
     Improves performance by reducing full-map searches
@@ -35,7 +35,7 @@
     <li>1.6</li>
   </supportedVersions>
 
-  <modVersion>1.0.3</modVersion>
+  <modVersion>1.0.4</modVersion>
 
   <modDependencies>
     <li>
