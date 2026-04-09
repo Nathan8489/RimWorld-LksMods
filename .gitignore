@@ -64,3 +64,4 @@ Assemblies/*.dll
 
 *.tmp
 *.temp
+Local.props
