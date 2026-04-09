@@ -152,7 +152,7 @@ namespace BillIngredientSource {
 						return zone.label;
 					}
 				}
-				return "(없어진 저장구역)";
+				return "BIS_MissingZone".Translate().ToString();
 			}
 
 			if (map != null && storageId.StartsWith(BISIds.StorageGroupCellPrefix)) {
@@ -160,7 +160,7 @@ namespace BillIngredientSource {
 				if (group != null) {
 					return SlotGroup.GetGroupLabel(group);
 				}
-				return "(없어진 저장소)";
+				return "BIS_MissingStorage".Translate().ToString();
 			}
 
 			if (map != null && storageId.StartsWith(BISIds.SlotGroupPrefix)) {
@@ -168,7 +168,7 @@ namespace BillIngredientSource {
 				if (slotGroup != null) {
 					return SlotGroup.GetGroupLabel(slotGroup);
 				}
-				return "(없어진 저장소)";
+				return "BIS_MissingStorage".Translate().ToString();
 			}
 
 			return fallbackLabel;

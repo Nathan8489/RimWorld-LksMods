@@ -7,6 +7,8 @@
   <BIS_OnlyIncluded>Look in {0}</BIS_OnlyIncluded>
   <BIS_Incompatible>{0} (incompatible)</BIS_Incompatible>
   <BIS_NoSelectableStorage>(No selectable storage)</BIS_NoSelectableStorage>
+  <BIS_MissingZone>(Missing zone)</BIS_MissingZone>
+  <BIS_MissingStorage>(Missing storage)</BIS_MissingStorage>
   <BIS_Settings_DefaultNewBillMode>Default ingredient search for new Bills</BIS_Settings_DefaultNewBillMode>
   <BIS_Settings_DefaultNewBillMode_Vanilla>No storage selected (Vanilla)</BIS_Settings_DefaultNewBillMode_Vanilla>
   <BIS_Settings_DefaultNewBillMode_AllStorages>Look Everywhere (all storages/zones)</BIS_Settings_DefaultNewBillMode_AllStorages>
