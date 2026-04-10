@@ -10,7 +10,7 @@ namespace BillIngredientSource {
 				return;
 			}
 
-			// 이미 새 구조가 있으면 건드리지 않음
+			// 이미 새 구조가 있으면 레거시 정리
 			if (data.UseAllStorages || data.SelectedStorageGroup != null) {
 				data.ClearLegacyData();
 				return;
@@ -86,16 +86,17 @@ namespace BillIngredientSource {
 				}
 			}
 
-			// 실패: 레거시 데이터만 정리하고 바닐라 모드로 복귀
-			Log.Warning("[BillIngredientSource] Failed to migrate legacy storage selection. Falling back to vanilla radius.");
+			// 실패: 새 구조는 비워 두되, 레거시 데이터는 남겨서 다음 접근 시 재시도 가능하게 한다.
+			Log.Warning("[BillIngredientSource] Failed to migrate legacy storage selection for now. Keeping legacy data for retry.");
 			data.UseAllStorages = false;
 			data.SelectedStorageGroup = null;
+			data.SelectedStorageLabel = null;
+			data.SelectedStorageKind = SelectedStorageKind.None;
 			data.SearchMode = IngredientSearchMode.Radius;
-			data.ClearLegacyData();
 		}
 
 		private static Map GetBillMap(Bill_Production bill) {
-			if (bill?.billStack?.billGiver is Thing thing) {
+			if (bill != null && bill.billStack != null && bill.billStack.billGiver is Thing thing) {
 				return thing.Map;
 			}
 			return null;

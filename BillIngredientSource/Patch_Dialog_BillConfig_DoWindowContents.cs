@@ -16,6 +16,9 @@ namespace BillIngredientSource {
 			if (bill == null) return;
 
 			BillData data = BillDataStore.GetOrCreate(bill);
+			if (!data.UseAllStorages && data.SelectedStorageGroup == null && data.HasLegacyData()) {
+				LegacyStorageMigration.TryMigrate(bill, data);
+			}
 			bool useStorage = data.UseAllStorages || data.SelectedStorageGroup != null;
 
 			data.SearchMode = useStorage
@@ -93,6 +96,9 @@ namespace BillIngredientSource {
 			}
 
 			BillData data = BillDataStore.GetOrCreate(bill);
+			if (!data.UseAllStorages && data.SelectedStorageGroup == null && data.HasLegacyData()) {
+				LegacyStorageMigration.TryMigrate(bill, data);
+			}
 			Map map = GetBillMap(bill);
 
 			if (!data.UseAllStorages && data.SelectedStorageGroup != null) {

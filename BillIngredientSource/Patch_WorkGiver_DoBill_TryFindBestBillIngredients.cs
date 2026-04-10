@@ -20,6 +20,10 @@ namespace BillIngredientSource {
 			if (!BillDataStore.TryGet(productionBill, out var data) || data == null)
 				return true;
 
+			if (!data.UseAllStorages && data.SelectedStorageGroup == null && data.HasLegacyData()) {
+				LegacyStorageMigration.TryMigrate(productionBill, data);
+			}
+
 			bool useStorage = data.UseAllStorages || data.SelectedStorageGroup != null;
 			if (!useStorage)
 				return true; // 바닐라 그대로

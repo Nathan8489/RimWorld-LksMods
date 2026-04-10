@@ -20,6 +20,9 @@ namespace BillIngredientSource {
 			copied.SelectedStorageGroup = originalData.SelectedStorageGroup;
 			copied.SelectedStorageLabel = originalData.SelectedStorageLabel;
 			copied.SelectedStorageKind = originalData.SelectedStorageKind;
+			copied.LegacySelectedStorageId = originalData.LegacySelectedStorageId;
+			copied.LegacySelectedZoneId = originalData.LegacySelectedZoneId;
+			copied.LegacySelectedZoneLabel = originalData.LegacySelectedZoneLabel;
 			BillDataStore.Set(clonedBill, copied);
 		}
 	}

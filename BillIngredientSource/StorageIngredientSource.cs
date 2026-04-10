@@ -17,6 +17,8 @@ namespace BillIngredientSource {
 				return result;
 			}
 
+			EnsureMigrated(bill, data);
+
 			HashSet<int> seenThingIds = new HashSet<int>();
 
 			if (data.UseAllStorages) {
@@ -339,6 +341,22 @@ namespace BillIngredientSource {
 			}
 
 			return false;
+		}
+
+		private static void EnsureMigrated(Bill_Production bill, BillData data) {
+			if (bill == null || data == null) {
+				return;
+			}
+
+			// 이미 새 구조가 있으면 아무것도 안 함
+			if (data.UseAllStorages || data.SelectedStorageGroup != null) {
+				return;
+			}
+
+			// 레거시 데이터가 있으면 지금 즉시 마이그레이션
+			if (data.HasLegacyData()) {
+				LegacyStorageMigration.TryMigrate(bill, data);
+			}
 		}
 	}
 }
