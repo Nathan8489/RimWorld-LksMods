@@ -16,7 +16,7 @@ namespace BillIngredientSource {
 			if (bill == null) return;
 
 			BillData data = BillDataStore.GetOrCreate(bill);
-			bool useStorage = !string.IsNullOrEmpty(data.SelectedStorageId);
+			bool useStorage = data.UseAllStorages || data.SelectedStorageGroup != null;
 
 			data.SearchMode = useStorage
 				? IngredientSearchMode.Storage
@@ -96,7 +96,7 @@ namespace BillIngredientSource {
 			Map map = GetBillMap(bill);
 
 			bool hasIngredientFilter = HasIngredientFilterPanel(bill);
-			bool useStorage = !string.IsNullOrEmpty(data.SelectedStorageId);
+			bool useStorage = data.UseAllStorages || data.SelectedStorageGroup != null;
 
 			data.SearchMode = useStorage
 				? IngredientSearchMode.Storage
@@ -114,10 +114,11 @@ namespace BillIngredientSource {
 
 		private static void DrawStorageButton(Rect rect, BillData data, Map map) {
 			string buttonLabel;
-			if (data.SelectedStorageId == BISIds.AllStorages) {
+
+			if (data.UseAllStorages) {
 				buttonLabel = Tr("BIS_AllStorages");
 			} else {
-				string selectedLabel = StorageIngredientSource.GetStorageLabel(map, data.SelectedStorageId, data.SelectedZoneLabel);
+				string selectedLabel = StorageIngredientSource.GetStorageLabel(map, data.SelectedStorageGroup);
 				buttonLabel = string.IsNullOrEmpty(selectedLabel)
 					? Tr("BIS_NoStorageSelected")
 					: Tr("BIS_OnlyIncluded", selectedLabel);
@@ -130,17 +131,21 @@ namespace BillIngredientSource {
 			List<FloatMenuOption> options = new List<FloatMenuOption>();
 
 			options.Add(new FloatMenuOption(Tr("BIS_NoStorageSelected"), delegate {
-				data.SelectedStorageId = null;
-				data.SelectedZoneId = -1;
-				data.SelectedZoneLabel = null;
+				data.UseAllStorages = false;
+				data.SelectedStorageGroup = null;
 				data.SearchMode = IngredientSearchMode.Radius;
 			}));
 
 			options.Add(new FloatMenuOption(Tr("BIS_AllStorages"), delegate {
-				data.SelectedStorageId = BISIds.AllStorages;
-				data.SelectedZoneId = -1;
-				data.SelectedZoneLabel = Tr("BIS_AllStorages");
-				Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
+				data.UseAllStorages = true;
+				data.SelectedStorageGroup = null;
+				data.SearchMode = IngredientSearchMode.Storage;
+#if DEBUG
+				Log.Message("[BillIngredientSource] Selected storage: ALL");
+#else
+				if (Prefs.DevMode)
+					Log.Message("[BillIngredientSource] Selected storage: ALL");
+#endif
 			}));
 
 			if (map != null) {
@@ -159,10 +164,15 @@ namespace BillIngredientSource {
 					string optionLabel = Tr("BIS_ZonePrefix", localZone.label);
 
 					options.Add(new FloatMenuOption(optionLabel, delegate {
-						data.SelectedZoneId = localZone.ID;
-						data.SelectedZoneLabel = localZone.label;
-						data.SelectedStorageId = BISIds.ZonePrefix + localZone.ID;
-						Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
+						data.UseAllStorages = false;
+						data.SelectedStorageGroup = localZone.GetSlotGroup();
+						data.SearchMode = IngredientSearchMode.Storage;
+#if DEBUG
+						Log.Message("[BillIngredientSource] Selected zone: " + localZone.label);
+#else
+						if (Prefs.DevMode)
+							Log.Message("[BillIngredientSource] Selected zone: " + localZone.label);
+#endif
 					}));
 				}
 
@@ -181,10 +191,15 @@ namespace BillIngredientSource {
 						: Tr("BIS_Incompatible", baseLabel);
 
 					options.Add(new FloatMenuOption(optionLabel, compatible ? (Action)delegate {
-						data.SelectedZoneId = -1;
-						data.SelectedZoneLabel = storageLabel;
-						data.SelectedStorageId = StorageIngredientSource.GetStorageGroupId(map, localGroup); 
-						Log.Message("[BillIngredientSource] Selected storage: " + data.SelectedStorageId);
+						data.UseAllStorages = false;
+						data.SelectedStorageGroup = localGroup;
+						data.SearchMode = IngredientSearchMode.Storage;
+#if DEBUG
+						Log.Message("[BillIngredientSource] Selected storage: " + SlotGroup.GetGroupLabel(localGroup));
+#else
+						if (Prefs.DevMode)
+							Log.Message("[BillIngredientSource] Selected storage: " + SlotGroup.GetGroupLabel(localGroup));
+#endif
 					}
 					: null));
 				}

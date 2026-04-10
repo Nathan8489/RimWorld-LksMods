@@ -73,6 +73,7 @@
     <Compile Include="BISUI.cs" />
     <Compile Include="IngredientSearchMode.cs" />
     <Compile Include="Init.cs" />
+    <Compile Include="LegacyStorageMigration.cs" />
     <Compile Include="NewBillDefaultMode.cs" />
     <Compile Include="Patch_BillStack_AddBill.cs" />
     <Compile Include="Patch_Bill_Production_ExposeData.cs" />

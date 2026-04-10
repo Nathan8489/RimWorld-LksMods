@@ -1,22 +1,77 @@
+using RimWorld;
 using Verse;
 
 namespace BillIngredientSource {
 	public class BillData : IExposable {
 		public IngredientSearchMode SearchMode = IngredientSearchMode.Radius;
 
-		// 선택된 저장소 식별자
-		// 예: "__ALL_STORAGES__", "Zone_12", "Building_345"
-		public string SelectedStorageId;
+		// 새 구조
+		public bool UseAllStorages;
+		public ISlotGroup SelectedStorageGroup;
 
-		// 기존 zone 전용 값들 (임시 호환 유지)
-		public int SelectedZoneId = -1;
-		public string SelectedZoneLabel;
+		// 구버전 마이그레이션용 필드
+		public string LegacySelectedStorageId;
+		public int LegacySelectedZoneId = -1;
+		public string LegacySelectedZoneLabel;
 
 		public void ExposeData() {
 			Scribe_Values.Look(ref SearchMode, "searchMode", IngredientSearchMode.Radius);
-			Scribe_Values.Look(ref SelectedStorageId, "selectedStorageId");
-			Scribe_Values.Look(ref SelectedZoneId, "selectedZoneId", -1);
-			Scribe_Values.Look(ref SelectedZoneLabel, "selectedZoneLabel");
+			Scribe_Values.Look(ref UseAllStorages, "useAllStorages", defaultValue: false);
+
+			if (Scribe.mode == LoadSaveMode.Saving) {
+				SaveSlotReferencable(SelectedStorageGroup, "selectedStorageGroup");
+			} else if (Scribe.mode == LoadSaveMode.LoadingVars || Scribe.mode == LoadSaveMode.ResolvingCrossRefs) {
+				LoadSlotReferencable(ref SelectedStorageGroup, "selectedStorageGroup");
+			}
+
+			// 레거시 로드용
+			Scribe_Values.Look(ref LegacySelectedStorageId, "selectedStorageId");
+			Scribe_Values.Look(ref LegacySelectedZoneId, "selectedZoneId", -1);
+			Scribe_Values.Look(ref LegacySelectedZoneLabel, "selectedZoneLabel");
+		}
+
+		private static void SaveSlotReferencable(ISlotGroup slot, string key) {
+			ILoadReferenceable refee = null;
+
+			ILoadReferenceable loadReferenceable = slot as ILoadReferenceable;
+			if (loadReferenceable != null) {
+				refee = loadReferenceable;
+			} else {
+				SlotGroup slotGroup = slot as SlotGroup;
+				if (slotGroup != null) {
+					ILoadReferenceable parent = slotGroup.parent as ILoadReferenceable;
+					if (parent != null) {
+						refee = parent;
+					}
+				}
+			}
+
+			Scribe_References.Look(ref refee, key);
+		}
+
+		private static void LoadSlotReferencable(ref ISlotGroup slot, string key) {
+			ILoadReferenceable refee = null;
+			Scribe_References.Look(ref refee, key);
+
+			if (refee is ISlotGroup slotGroup) {
+				slot = slotGroup;
+			} else if (refee is ISlotGroupParent slotGroupParent) {
+				slot = slotGroupParent.GetSlotGroup();
+			} else {
+				slot = null;
+			}
+		}
+
+		public bool HasLegacyData() {
+			return !string.IsNullOrEmpty(LegacySelectedStorageId)
+				|| LegacySelectedZoneId != -1
+				|| !string.IsNullOrEmpty(LegacySelectedZoneLabel);
+		}
+
+		public void ClearLegacyData() {
+			LegacySelectedStorageId = null;
+			LegacySelectedZoneId = -1;
+			LegacySelectedZoneLabel = null;
 		}
 	}
 }

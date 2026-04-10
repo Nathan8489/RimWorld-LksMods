@@ -14,6 +14,11 @@ namespace BillIngredientSource {
 			}
 
 			BillDataStore.Set(__instance, data);
+
+			if (Scribe.mode == LoadSaveMode.PostLoadInit) {
+				LegacyStorageMigration.TryMigrate(__instance, data);
+				BillDataStore.Set(__instance, data);
+			}
 		}
 	}
 }

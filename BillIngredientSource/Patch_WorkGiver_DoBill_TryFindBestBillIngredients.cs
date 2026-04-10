@@ -7,19 +7,21 @@ namespace BillIngredientSource {
 	[HarmonyPatch(typeof(WorkGiver_DoBill), "TryFindBestBillIngredients")]
 	public static class Patch_WorkGiver_DoBill_TryFindBestBillIngredients {
 		public static bool Prefix(
-		Bill bill,
-		Pawn pawn,
-		Thing billGiver,
-		List<ThingCount> chosen,
-		List<IngredientCount> missingIngredients,
-		ref bool __result) {
+			Bill bill,
+			Pawn pawn,
+			Thing billGiver,
+			List<ThingCount> chosen,
+			List<IngredientCount> missingIngredients,
+			ref bool __result) {
+
 			if (!(bill is Bill_Production productionBill))
 				return true;
 
-			if (!BillDataStore.TryGet(productionBill, out var data))
+			if (!BillDataStore.TryGet(productionBill, out var data) || data == null)
 				return true;
 
-			if (string.IsNullOrEmpty(data.SelectedStorageId))
+			bool useStorage = data.UseAllStorages || data.SelectedStorageGroup != null;
+			if (!useStorage)
 				return true; // 바닐라 그대로
 
 			__result = StorageIngredientSearch.TryFindBestBillIngredientsFromStorageUsingVanillaSelector(

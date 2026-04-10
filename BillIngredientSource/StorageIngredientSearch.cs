@@ -55,7 +55,9 @@ namespace BillIngredientSource {
 				);
 			}
 
+#if DEBUG
 			Log.Message($"[BIS] storage candidates={candidates.Count}, available={available.Count}");
+#endif
 
 			bool result = RunVanillaSelector(
 				available,
@@ -65,7 +67,13 @@ namespace BillIngredientSource {
 				missingIngredients
 			);
 
+			// selector 결과는 유저 디버깅에도 쓸 수 있음 → DevMode 유지
+#if DEBUG
 			Log.Message($"[BIS] vanilla selector result={result}, chosen={chosen.Count}, missing={(missingIngredients?.Count ?? -1)}");
+#else
+			if (Prefs.DevMode)
+				Log.Message($"[BIS] selector result={result}, chosen={chosen.Count}, missing={(missingIngredients?.Count ?? -1)}");
+#endif
 			return result;
 		}
 
@@ -82,7 +90,9 @@ namespace BillIngredientSource {
 			List<Thing> available = new List<Thing>();
 			HashSet<int> seenThingIds = new HashSet<int>();
 
+#if DEBUG
 			Log.Message($"[BIS] all storages units={units.Count}");
+#endif
 
 			bool attempted = false;
 
@@ -114,7 +124,9 @@ namespace BillIngredientSource {
 					missingIngredients
 				);
 
+#if DEBUG
 				Log.Message($"[BIS] all storages step={i + 1}/{units.Count}, available={available.Count}, result={result}, chosen={chosen.Count}, missing={(missingIngredients?.Count ?? -1)}");
+#endif
 
 				if (result) {
 					return true;
@@ -132,7 +144,9 @@ namespace BillIngredientSource {
 					missingIngredients
 				);
 
+#if DEBUG
 				Log.Message($"[BIS] all storages final-empty available={available.Count}, result={result}, chosen={chosen.Count}, missing={(missingIngredients?.Count ?? -1)}");
+#endif
 				return result;
 			}
 
@@ -165,7 +179,7 @@ namespace BillIngredientSource {
 				return false;
 			}
 
-			return data.SelectedStorageId == BISIds.AllStorages;
+			return data.UseAllStorages;
 		}
 
 		private static List<StorageUnit> BuildAllStorageUnits(Map map, IntVec3 rootCell) {
