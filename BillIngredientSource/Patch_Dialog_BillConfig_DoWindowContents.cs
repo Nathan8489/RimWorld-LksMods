@@ -95,6 +95,10 @@ namespace BillIngredientSource {
 			BillData data = BillDataStore.GetOrCreate(bill);
 			Map map = GetBillMap(bill);
 
+			if (!data.UseAllStorages && data.SelectedStorageGroup != null) {
+				StorageIngredientSource.ValidateSelectedStorage(map, data);
+			}
+
 			bool hasIngredientFilter = HasIngredientFilterPanel(bill);
 			bool useStorage = data.UseAllStorages || data.SelectedStorageGroup != null;
 

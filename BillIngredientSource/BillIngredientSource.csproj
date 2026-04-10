@@ -76,6 +76,7 @@
     <Compile Include="LegacyStorageMigration.cs" />
     <Compile Include="NewBillDefaultMode.cs" />
     <Compile Include="Patch_BillStack_AddBill.cs" />
+    <Compile Include="Patch_Bill_Production_Clone.cs" />
     <Compile Include="Patch_Bill_Production_ExposeData.cs" />
     <Compile Include="Patch_Dialog_BillConfig.cs" />
     <Compile Include="Patch_Dialog_BillConfig_DoWindowContents.cs" />
