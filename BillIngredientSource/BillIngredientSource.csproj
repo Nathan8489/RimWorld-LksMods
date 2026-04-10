@@ -70,6 +70,7 @@
     <Compile Include="BillIngredientSourceMod.cs" />
     <Compile Include="BillIngredientSourceSettings.cs" />
     <Compile Include="BISIds.cs" />
+    <Compile Include="BISMigrationGameComponent.cs" />
     <Compile Include="BISUI.cs" />
     <Compile Include="IngredientSearchMode.cs" />
     <Compile Include="Init.cs" />
