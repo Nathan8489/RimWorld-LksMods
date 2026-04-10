@@ -135,17 +135,17 @@ namespace BillIngredientSource {
 			List<FloatMenuOption> options = new List<FloatMenuOption>();
 
 			options.Add(new FloatMenuOption(Tr("BIS_NoStorageSelected"), delegate {
-				data.UseAllStorages = false;
-				data.SelectedStorageGroup = null;
-				data.SearchMode = IngredientSearchMode.Radius;
+				data.ClearSelectedStorage();
 			}));
 
 			options.Add(new FloatMenuOption(Tr("BIS_AllStorages"), delegate {
 				data.UseAllStorages = true;
 				data.SelectedStorageGroup = null;
+				data.SelectedStorageLabel = null;
+				data.SelectedStorageKind = SelectedStorageKind.None;
 				data.SearchMode = IngredientSearchMode.Storage;
 #if DEBUG
-				Log.Message("[BillIngredientSource] Selected storage: ALL");
+			Log.Message("[BillIngredientSource] Selected storage: ALL");
 #else
 				if (Prefs.DevMode)
 					Log.Message("[BillIngredientSource] Selected storage: ALL");
@@ -168,9 +168,7 @@ namespace BillIngredientSource {
 					string optionLabel = Tr("BIS_ZonePrefix", localZone.label);
 
 					options.Add(new FloatMenuOption(optionLabel, delegate {
-						data.UseAllStorages = false;
-						data.SelectedStorageGroup = localZone.GetSlotGroup();
-						data.SearchMode = IngredientSearchMode.Storage;
+						StorageIngredientSource.AssignSelectedStorage(data, localZone.GetSlotGroup());
 #if DEBUG
 						Log.Message("[BillIngredientSource] Selected zone: " + localZone.label);
 #else
@@ -195,9 +193,7 @@ namespace BillIngredientSource {
 						: Tr("BIS_Incompatible", baseLabel);
 
 					options.Add(new FloatMenuOption(optionLabel, compatible ? (Action)delegate {
-						data.UseAllStorages = false;
-						data.SelectedStorageGroup = localGroup;
-						data.SearchMode = IngredientSearchMode.Storage;
+						StorageIngredientSource.AssignSelectedStorage(data, localGroup);
 #if DEBUG
 						Log.Message("[BillIngredientSource] Selected storage: " + SlotGroup.GetGroupLabel(localGroup));
 #else

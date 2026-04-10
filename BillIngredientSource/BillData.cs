@@ -2,12 +2,23 @@ using RimWorld;
 using Verse;
 
 namespace BillIngredientSource {
+	public enum SelectedStorageKind {
+		None = 0,
+		Zone = 1,
+		SlotGroup = 2,
+		StorageGroup = 3
+	}
+
 	public class BillData : IExposable {
 		public IngredientSearchMode SearchMode = IngredientSearchMode.Radius;
 
 		// 새 구조
 		public bool UseAllStorages;
 		public ISlotGroup SelectedStorageGroup;
+
+		// 재매칭용 메타데이터
+		public string SelectedStorageLabel;
+		public SelectedStorageKind SelectedStorageKind = SelectedStorageKind.None;
 
 		// 구버전 마이그레이션용 필드
 		public string LegacySelectedStorageId;
@@ -17,6 +28,8 @@ namespace BillIngredientSource {
 		public void ExposeData() {
 			Scribe_Values.Look(ref SearchMode, "searchMode", IngredientSearchMode.Radius);
 			Scribe_Values.Look(ref UseAllStorages, "useAllStorages", defaultValue: false);
+			Scribe_Values.Look(ref SelectedStorageLabel, "selectedStorageLabel");
+			Scribe_Values.Look(ref SelectedStorageKind, "selectedStorageKind", SelectedStorageKind.None);
 
 			if (Scribe.mode == LoadSaveMode.Saving) {
 				SaveSlotReferencable(SelectedStorageGroup, "selectedStorageGroup");
@@ -72,6 +85,14 @@ namespace BillIngredientSource {
 			LegacySelectedStorageId = null;
 			LegacySelectedZoneId = -1;
 			LegacySelectedZoneLabel = null;
+		}
+
+		public void ClearSelectedStorage() {
+			UseAllStorages = false;
+			SelectedStorageGroup = null;
+			SelectedStorageLabel = null;
+			SelectedStorageKind = SelectedStorageKind.None;
+			SearchMode = IngredientSearchMode.Radius;
 		}
 	}
 }

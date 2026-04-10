@@ -47,9 +47,7 @@ namespace BillIngredientSource {
 						.FirstOrDefault(z => z.ID == zoneId);
 
 					if (zone != null) {
-						data.UseAllStorages = false;
-						data.SelectedStorageGroup = zone.GetSlotGroup();
-						data.SearchMode = IngredientSearchMode.Storage;
+						StorageIngredientSource.AssignSelectedStorage(data, zone.GetSlotGroup());
 						data.ClearLegacyData();
 #if DEBUG
 						Log.Message("[BillIngredientSource] Migrated legacy zone by ID: " + zone.label);
@@ -65,9 +63,7 @@ namespace BillIngredientSource {
 						.FirstOrDefault(z => z.label == data.LegacySelectedZoneLabel);
 
 					if (zoneByLabel != null) {
-						data.UseAllStorages = false;
-						data.SelectedStorageGroup = zoneByLabel.GetSlotGroup();
-						data.SearchMode = IngredientSearchMode.Storage;
+						StorageIngredientSource.AssignSelectedStorage(data, zoneByLabel.GetSlotGroup());
 						data.ClearLegacyData();
 #if DEBUG
 						Log.Message("[BillIngredientSource] Migrated legacy zone by label: " + zoneByLabel.label);
@@ -81,9 +77,7 @@ namespace BillIngredientSource {
 			if (!string.IsNullOrEmpty(data.LegacySelectedStorageId)) {
 				ISlotGroup migratedGroup = FindLegacyGroup(map, data.LegacySelectedStorageId);
 				if (migratedGroup != null) {
-					data.UseAllStorages = false;
-					data.SelectedStorageGroup = migratedGroup;
-					data.SearchMode = IngredientSearchMode.Storage;
+					StorageIngredientSource.AssignSelectedStorage(data, migratedGroup);
 					data.ClearLegacyData();
 #if DEBUG
 					Log.Message("[BillIngredientSource] Migrated legacy storage group: " + SlotGroup.GetGroupLabel(migratedGroup));
