@@ -58,6 +58,8 @@ Assemblies/*.dll
 # 하지만 폴더는 유지
 !Assemblies/
 
+ReferencesVanilaCodes/
+
 # =========================
 # 기타
 # =========================
