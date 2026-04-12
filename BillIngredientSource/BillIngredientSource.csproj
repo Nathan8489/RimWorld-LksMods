@@ -25,7 +25,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\Assemblies\</OutputPath>
+    <OutputPath>Output\Assemblies\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -86,6 +86,13 @@
     <Compile Include="StorageIngredientSearch.cs" />
     <Compile Include="StorageIngredientSource.cs" />
     <Compile Include="VanillaBillBridge.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Output\About\About.xml" />
+    <Content Include="Output\About\Preview.png" />
+    <Content Include="Output\About\PublishedFileId.txt" />
+    <Content Include="Output\Languages\English\Keyed\BillIngredientSource.xml" />
+    <Content Include="Output\Languages\Korean\Keyed\BillIngredientSource.xml" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
