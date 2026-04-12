@@ -69,8 +69,6 @@ namespace BillIngredientSource {
 
 			// selector 결과는 유저 디버깅에도 쓸 수 있음 → DevMode 유지
 #if DEBUG
-			Log.Message($"[BIS] vanilla selector result={result}, chosen={chosen.Count}, missing={(missingIngredients?.Count ?? -1)}");
-#else
 			if (Prefs.DevMode)
 				Log.Message($"[BIS] selector result={result}, chosen={chosen.Count}, missing={(missingIngredients?.Count ?? -1)}");
 #endif

@@ -102,7 +102,7 @@ namespace BillIngredientSource {
 			Map map = GetBillMap(bill);
 
 			if (!data.UseAllStorages && data.SelectedStorageGroup != null) {
-				StorageIngredientSource.ValidateSelectedStorage(map, data);
+				StorageIngredientSource.ValidateSelectedStorage(map, bill, data);
 			}
 
 			bool hasIngredientFilter = HasIngredientFilterPanel(bill);
@@ -151,10 +151,8 @@ namespace BillIngredientSource {
 				data.SelectedStorageKind = SelectedStorageKind.None;
 				data.SearchMode = IngredientSearchMode.Storage;
 #if DEBUG
-			Log.Message("[BillIngredientSource] Selected storage: ALL");
-#else
-				if (Prefs.DevMode)
-					Log.Message("[BillIngredientSource] Selected storage: ALL");
+			if (Prefs.DevMode)
+				Log.Message("[BillIngredientSource] Selected storage: ALL");
 #endif
 			}));
 
@@ -176,8 +174,6 @@ namespace BillIngredientSource {
 					options.Add(new FloatMenuOption(optionLabel, delegate {
 						StorageIngredientSource.AssignSelectedStorage(data, localZone.GetSlotGroup());
 #if DEBUG
-						Log.Message("[BillIngredientSource] Selected zone: " + localZone.label);
-#else
 						if (Prefs.DevMode)
 							Log.Message("[BillIngredientSource] Selected zone: " + localZone.label);
 #endif
@@ -201,8 +197,6 @@ namespace BillIngredientSource {
 					options.Add(new FloatMenuOption(optionLabel, compatible ? (Action)delegate {
 						StorageIngredientSource.AssignSelectedStorage(data, localGroup);
 #if DEBUG
-						Log.Message("[BillIngredientSource] Selected storage: " + SlotGroup.GetGroupLabel(localGroup));
-#else
 						if (Prefs.DevMode)
 							Log.Message("[BillIngredientSource] Selected storage: " + SlotGroup.GetGroupLabel(localGroup));
 #endif

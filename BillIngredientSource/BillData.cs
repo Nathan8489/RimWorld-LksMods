@@ -25,6 +25,9 @@ namespace BillIngredientSource {
 		public int LegacySelectedZoneId = -1;
 		public string LegacySelectedZoneLabel;
 
+		// 오류 fallback 초기화 알림용
+		public bool StorageResetNotified;
+
 		public void ExposeData() {
 			Scribe_Values.Look(ref SearchMode, "searchMode", IngredientSearchMode.Radius);
 			Scribe_Values.Look(ref UseAllStorages, "useAllStorages", defaultValue: false);
@@ -41,6 +44,9 @@ namespace BillIngredientSource {
 			Scribe_Values.Look(ref LegacySelectedStorageId, "selectedStorageId");
 			Scribe_Values.Look(ref LegacySelectedZoneId, "selectedZoneId", -1);
 			Scribe_Values.Look(ref LegacySelectedZoneLabel, "selectedZoneLabel");
+
+			// 오류 fallback 초기화 알람 했는지 체크용
+			Scribe_Values.Look(ref StorageResetNotified, "storageResetNotified", defaultValue: false);
 		}
 
 		private static void SaveSlotReferencable(ISlotGroup slot, string key) {

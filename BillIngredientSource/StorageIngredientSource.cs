@@ -26,7 +26,7 @@ namespace BillIngredientSource {
 				return result;
 			}
 
-			if (!ValidateSelectedStorage(map, data)) {
+			if (!ValidateSelectedStorage(map, bill, data)) {
 				return result;
 			}
 
@@ -103,9 +103,10 @@ namespace BillIngredientSource {
 			data.SelectedStorageLabel = GetStableStorageLabel(slotGroup);
 			data.SelectedStorageKind = GetStorageKind(slotGroup);
 			data.SearchMode = IngredientSearchMode.Storage;
+			data.StorageResetNotified = false;
 		}
 
-		public static bool ValidateSelectedStorage(Map map, BillData data) {
+		public static bool ValidateSelectedStorage(Map map, Bill_Production bill, BillData data) {
 			if (map == null || data == null) {
 				return false;
 			}
@@ -131,14 +132,41 @@ namespace BillIngredientSource {
 				data.SelectedStorageLabel = GetStableStorageLabel(rematched);
 				data.SelectedStorageKind = GetStorageKind(rematched);
 				data.SearchMode = IngredientSearchMode.Storage;
+				data.StorageResetNotified = false;
 
-				if (Prefs.DevMode) {
-					Log.Message("[BillIngredientSource] Rematched storage by name: " + data.SelectedStorageLabel);
-				}
+#if DEBUG
+		if (Prefs.DevMode) {
+			Log.Message("[BillIngredientSource] Rematched storage by name: " + data.SelectedStorageLabel);
+		}
+#endif
 				return true;
 			}
 
+			string lostLabel = string.IsNullOrEmpty(data.SelectedStorageLabel)
+				? "Unknown storage"
+				: data.SelectedStorageLabel;
+
+			string billLabel = GetBillLabel(bill);
+			string benchLabel = GetBillGiverLabel(bill);
+
 			data.ClearSelectedStorage();
+
+			if (!data.StorageResetNotified) {
+				Log.Warning(
+					"[BillIngredientSource] Failed to rematch storage by name - bench=" + benchLabel +
+					", bill=" + billLabel +
+					", storage=" + lostLabel +
+					". Resetting storage link for this bill."
+				);
+
+				Messages.Message(
+					"[BIS] Storage reset: " + billLabel + " @ " + benchLabel + " (" + lostLabel + ")",
+					MessageTypeDefOf.NeutralEvent
+				);
+
+				data.StorageResetNotified = true;
+			}
+
 			return false;
 		}
 
@@ -357,6 +385,26 @@ namespace BillIngredientSource {
 			if (data.HasLegacyData()) {
 				LegacyStorageMigration.TryMigrate(bill, data);
 			}
+		}
+
+		private static string GetBillLabel(Bill_Production bill) {
+			if (bill == null) {
+				return "Unknown bill";
+			}
+
+			string label = bill.LabelCap;
+			return string.IsNullOrEmpty(label) ? "Unknown bill" : label;
+		}
+
+		private static string GetBillGiverLabel(Bill_Production bill) {
+			if (bill != null && bill.billStack != null && bill.billStack.billGiver is Thing thing) {
+				string label = thing.LabelShortCap;
+				if (!string.IsNullOrEmpty(label)) {
+					return label;
+				}
+			}
+
+			return "Unknown bench";
 		}
 	}
 }
