@@ -93,6 +93,7 @@
     <Content Include="Output\About\PublishedFileId.txt" />
     <Content Include="Output\Languages\English\Keyed\BillIngredientSource.xml" />
     <Content Include="Output\Languages\Korean\Keyed\BillIngredientSource.xml" />
+    <Content Include="PatchNotes.txt" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

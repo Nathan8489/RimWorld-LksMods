@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Runtime.CompilerServices;
+using System.Collections.Generic;
 using RimWorld;
 using Verse;
 using Verse.AI;
@@ -9,6 +11,38 @@ namespace BillIngredientSource {
 			public List<SlotGroup> SlotGroups = new List<SlotGroup>();
 			public int MinDistSqToRoot;
 		}
+
+		private struct StorageUnitsCacheKey : IEquatable<StorageUnitsCacheKey> {
+			public int MapId;
+			public IntVec3 RootCell;
+
+			public bool Equals(StorageUnitsCacheKey other) {
+				return MapId == other.MapId && RootCell == other.RootCell;
+			}
+
+			public override bool Equals(object obj) {
+				return obj is StorageUnitsCacheKey other && Equals(other);
+			}
+
+			public override int GetHashCode() {
+				unchecked {
+					int hash = MapId;
+					hash = (hash * 397) ^ RootCell.GetHashCode();
+					return hash;
+				}
+			}
+		}
+
+		private sealed class StorageUnitsCacheEntry {
+			public long TopologySignature;
+			public List<StorageUnit> Units;
+			public int LastAccessTick;
+		}
+
+		private static readonly Dictionary<StorageUnitsCacheKey, StorageUnitsCacheEntry> allStoragesCache
+			= new Dictionary<StorageUnitsCacheKey, StorageUnitsCacheEntry>();
+
+		private const int MaxAllStoragesCacheEntries = 128;
 
 		public static bool TryFindBestBillIngredientsFromStorageUsingVanillaSelector(
 			Bill_Production bill,
@@ -84,7 +118,7 @@ namespace BillIngredientSource {
 			List<ThingCount> chosen,
 			List<IngredientCount> missingIngredients) {
 
-			List<StorageUnit> units = BuildAllStorageUnits(map, rootCell);
+			List<StorageUnit> units = GetAllStorageUnitsCached(map, rootCell);
 			List<Thing> available = new List<Thing>();
 			HashSet<int> seenThingIds = new HashSet<int>();
 
@@ -180,7 +214,7 @@ namespace BillIngredientSource {
 			return data.UseAllStorages;
 		}
 
-		private static List<StorageUnit> BuildAllStorageUnits(Map map, IntVec3 rootCell) {
+		private static List<StorageUnit> BuildAllStorageUnitsUncached(Map map, IntVec3 rootCell) {
 			List<StorageUnit> result = new List<StorageUnit>();
 
 			if (map == null) {
@@ -255,7 +289,36 @@ namespace BillIngredientSource {
 			}
 
 			result.Sort((a, b) => a.MinDistSqToRoot.CompareTo(b.MinDistSqToRoot));
+#if DEBUG
+			if (Prefs.DevMode) {
+				Log.Message("[BIS] Sorted storage units for rootCell " + rootCell + ":");
+				for (int i = 0; i < result.Count; i++) {
+					Log.Message("[BIS]   " + i + ": " + GetStorageUnitDebugLabel(result[i]) + " distSq=" + result[i].MinDistSqToRoot);
+				}
+			}
+#endif
 			return result;
+		}
+
+		private static string GetStorageUnitDebugLabel(StorageUnit unit) {
+			if (unit == null || unit.SlotGroups == null || unit.SlotGroups.Count == 0) {
+				return "<empty>";
+			}
+
+			SlotGroup sg = unit.SlotGroups[0];
+			if (sg == null) {
+				return "<null>";
+			}
+
+			if (sg.parent is Zone_Stockpile zone) {
+				return "[Zone] " + zone.label;
+			}
+
+			if (sg.StorageGroup != null) {
+				return "[StorageGroup] " + SlotGroup.GetGroupLabel(sg.StorageGroup);
+			}
+
+			return "[Storage] " + SlotGroup.GetGroupLabel(sg);
 		}
 
 		private static void AddUnitThingsToAvailable(
@@ -374,6 +437,163 @@ namespace BillIngredientSource {
 			}
 
 			return billGiver.Position;
+		}
+
+		private static List<StorageUnit> GetAllStorageUnitsCached(Map map, IntVec3 rootCell) {
+			if (map == null) {
+				return new List<StorageUnit>();
+			}
+
+			StorageUnitsCacheKey key = new StorageUnitsCacheKey {
+				MapId = map.uniqueID,
+				RootCell = rootCell
+			};
+
+			long signature = ComputeAllStoragesTopologySignature(map);
+
+			StorageUnitsCacheEntry entry;
+			if (allStoragesCache.TryGetValue(key, out entry) && entry != null && entry.Units != null) {
+				if (entry.TopologySignature == signature) {
+					entry.LastAccessTick = Find.TickManager != null ? Find.TickManager.TicksGame : 0;
+
+#if DEBUG
+					if (Prefs.DevMode) {
+						Log.Message("[BIS] AllStorages cache HIT map=" + map.uniqueID + " root=" + rootCell);
+					}
+#endif
+					return entry.Units;
+				}
+
+#if DEBUG
+				if (Prefs.DevMode) {
+					Log.Message("[BIS] AllStorages cache REBUILD map=" + map.uniqueID + " root=" + rootCell);
+				}
+#endif
+			} else {
+#if DEBUG
+				if (Prefs.DevMode) {
+					Log.Message("[BIS] AllStorages cache MISS map=" + map.uniqueID + " root=" + rootCell);
+				}
+#endif
+			}
+
+			List<StorageUnit> units = BuildAllStorageUnitsUncached(map, rootCell);
+
+			allStoragesCache[key] = new StorageUnitsCacheEntry {
+				TopologySignature = signature,
+				Units = units,
+				LastAccessTick = Find.TickManager != null ? Find.TickManager.TicksGame : 0
+			};
+
+			TrimAllStoragesCacheIfNeeded();
+			return units;
+		}
+
+		private static long ComputeAllStoragesTopologySignature(Map map) {
+			if (map == null) {
+				return 0L;
+			}
+
+			unchecked {
+				long hash = 1469598103934665603L;
+
+				// Zone_Stockpile
+				List<Zone> allZones = map.zoneManager.AllZones;
+				for (int i = 0; i < allZones.Count; i++) {
+					Zone_Stockpile zone = allZones[i] as Zone_Stockpile;
+					if (zone == null) {
+						continue;
+					}
+
+					hash = Mix(hash, zone.ID);
+					hash = Mix(hash, zone.cells != null ? zone.cells.Count : 0);
+				}
+
+				// 일반 storage / storage group
+				List<SlotGroup> allGroups = map.haulDestinationManager.AllGroupsListInPriorityOrder;
+				HashSet<StorageGroup> seenStorageGroups = new HashSet<StorageGroup>();
+
+				for (int i = 0; i < allGroups.Count; i++) {
+					SlotGroup sg = allGroups[i];
+					if (sg == null) {
+						continue;
+					}
+
+					// Zone은 zone 루프에서만 반영
+					if (sg.parent is Zone_Stockpile) {
+						continue;
+					}
+
+					if (sg.StorageGroup != null) {
+						if (!seenStorageGroups.Add(sg.StorageGroup)) {
+							continue;
+						}
+
+						hash = Mix(hash, RuntimeHelpers.GetHashCode(sg.StorageGroup));
+
+						int memberCount = 0;
+						int totalCellCount = 0;
+
+						for (int j = 0; j < allGroups.Count; j++) {
+							SlotGroup member = allGroups[j];
+							if (member == null || member.StorageGroup != sg.StorageGroup) {
+								continue;
+							}
+
+							memberCount++;
+							totalCellCount += member.CellsList != null ? member.CellsList.Count : 0;
+						}
+
+						hash = Mix(hash, memberCount);
+						hash = Mix(hash, totalCellCount);
+					} else {
+						hash = Mix(hash, RuntimeHelpers.GetHashCode(sg));
+						hash = Mix(hash, sg.CellsList != null ? sg.CellsList.Count : 0);
+					}
+				}
+
+				return hash;
+			}
+		}
+
+		private static long Mix(long hash, int value) {
+			unchecked {
+				hash ^= value;
+				hash *= 1099511628211L;
+				return hash;
+			}
+		}
+
+		private static void TrimAllStoragesCacheIfNeeded() {
+			if (allStoragesCache.Count <= MaxAllStoragesCacheEntries) {
+				return;
+			}
+
+			StorageUnitsCacheKey oldestKey = default(StorageUnitsCacheKey);
+			int oldestTick = int.MaxValue;
+			bool found = false;
+
+			foreach (KeyValuePair<StorageUnitsCacheKey, StorageUnitsCacheEntry> kvp in allStoragesCache) {
+				if (kvp.Value == null) {
+					oldestKey = kvp.Key;
+					found = true;
+					break;
+				}
+
+				if (!found || kvp.Value.LastAccessTick < oldestTick) {
+					oldestTick = kvp.Value.LastAccessTick;
+					oldestKey = kvp.Key;
+					found = true;
+				}
+			}
+
+			if (found) {
+				allStoragesCache.Remove(oldestKey);
+			}
+		}
+
+		public static void ClearAllStoragesCache() {
+			allStoragesCache.Clear();
 		}
 	}
 }
