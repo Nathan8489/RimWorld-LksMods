@@ -3,4 +3,5 @@
   <BFC_ModName>Bill Failure Cooldown</BFC_ModName>
   <BFC_SearchFailureCooldownTicks>Ingredient search failure cooldown (ticks): {0}</BFC_SearchFailureCooldownTicks>
   <BFC_SearchFailureCooldownDesc>0 = disabled. Manual prioritized work bypasses the cooldown.</BFC_SearchFailureCooldownDesc>
+  <BFC_ResetToDefault>Reset to default</BFC_ResetToDefault>
 </LanguageData>

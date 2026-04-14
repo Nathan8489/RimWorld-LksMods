@@ -9,9 +9,8 @@ namespace BillFailureCooldown {
 		public BillFailureCooldownMod(ModContentPack content) : base(content) {
 			Settings = GetSettings<BillFailureCooldownSettings>();
 
-			Harmony harmony = new Harmony("Lk.billfailurecooldown");
+			Harmony harmony = new Harmony("lk.billfailurecooldown");
 			harmony.PatchAll();
-			Log.Message("[BillFailureCooldown] Loaded");
 		}
 
 		public override string SettingsCategory() {
@@ -30,6 +29,12 @@ namespace BillFailureCooldown {
 
 			listing.Gap();
 			listing.Label("BFC_SearchFailureCooldownDesc".Translate());
+
+			listing.Gap();
+
+			if (listing.ButtonText("BFC_ResetToDefault".Translate())) {
+				Settings.Reset();
+			}
 
 			listing.End();
 
