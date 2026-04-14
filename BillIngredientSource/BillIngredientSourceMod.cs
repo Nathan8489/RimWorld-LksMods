@@ -32,6 +32,14 @@ namespace BillIngredientSource {
 				Settings.defaultNewBillMode = NewBillDefaultMode.AllStorages;
 			}
 
+			listing.GapLine();
+
+			listing.CheckboxLabeled(
+				"BIS_Settings_EnableDebugLogging".Translate(),
+				ref Settings.enableDebugLogging,
+				"BIS_Settings_EnableDebugLogging_Desc".Translate()
+			);
+
 			listing.End();
 			Settings.Write();
 		}

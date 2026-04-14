@@ -12,4 +12,6 @@
   <BIS_Settings_DefaultNewBillMode>Default ingredient search for new Bills</BIS_Settings_DefaultNewBillMode>
   <BIS_Settings_DefaultNewBillMode_Vanilla>No storage selected (Vanilla)</BIS_Settings_DefaultNewBillMode_Vanilla>
   <BIS_Settings_DefaultNewBillMode_AllStorages>Look Everywhere (all storages/zones)</BIS_Settings_DefaultNewBillMode_AllStorages>
+  <BIS_Settings_EnableDebugLogging>Enable debug logging</BIS_Settings_EnableDebugLogging>
+  <BIS_Settings_EnableDebugLogging_Desc>Show BIS debug logs in the game log.</BIS_Settings_EnableDebugLogging_Desc>
 </LanguageData>

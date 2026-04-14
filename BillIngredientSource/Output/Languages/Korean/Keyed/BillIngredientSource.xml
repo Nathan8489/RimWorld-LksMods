@@ -12,4 +12,6 @@
   <BIS_Settings_DefaultNewBillMode>신규 Bill의 재료 탐색 기본값</BIS_Settings_DefaultNewBillMode>
   <BIS_Settings_DefaultNewBillMode_Vanilla>저장구역 선택안함(바닐라)</BIS_Settings_DefaultNewBillMode_Vanilla>
   <BIS_Settings_DefaultNewBillMode_AllStorages>모든 저장구역 포함</BIS_Settings_DefaultNewBillMode_AllStorages>
+  <BIS_Settings_EnableDebugLogging>디버그 로그 표시</BIS_Settings_EnableDebugLogging>
+  <BIS_Settings_EnableDebugLogging_Desc>게임 로그에 BIS 디버그 로그를 표시합니다.</BIS_Settings_EnableDebugLogging_Desc>
 </LanguageData>
