@@ -1,0 +1,49 @@
+﻿<ModMetaData>
+  <name>Bill Failure Cooldown</name>
+  <author>Lk</author>
+  <description>
+    ■ Summary
+
+    Reduces repeated bill ingredient searches after failure.
+
+    When a bill fails to find ingredients,
+    the failure is cached for a short time,
+    so the game does not immediately repeat the same expensive search.
+
+    - Failed ingredient search → cooldown starts
+    - During cooldown → immediately fail without searching
+    - Forced prioritized work bypasses the cooldown
+    - Cooldown duration is configurable (0 = disabled)
+
+    Improves TPS in colonies where many bills repeatedly fail due to missing ingredients.
+
+
+    ■ 요약
+
+    Bill 재료 탐색 실패 후 일정 시간 동안 재탐색을 제한합니다.
+
+    Bill이 재료를 찾지 못하면 그 실패 결과를 잠시 캐싱하여
+    게임이 같은 탐색을 즉시 반복하지 않도록 합니다.
+
+    - 재료 탐색 실패 → 쿨다운 시작
+    - 쿨다운 중 → 탐색 없이 즉시 실패
+    - 수동 작업은 쿨다운 무시
+    - 모드 설정에서 쿨다운 시간 설정 가능 (0 = 비활성화)
+
+    재료 부족으로 동일한 Bill 탐색이 반복되는 상황에서 TPS 개선에 도움이 됩니다.
+  </description>
+  <packageId>Lk.billfailurecooldown</packageId>
+
+  <supportedVersions>
+    <li>1.6</li>
+  </supportedVersions>
+
+  <modVersion>0.1.0</modVersion>
+
+  <modDependencies>
+    <li>
+      <packageId>brrainz.harmony</packageId>
+      <displayName>Harmony</displayName>
+    </li>
+  </modDependencies>
+</ModMetaData>

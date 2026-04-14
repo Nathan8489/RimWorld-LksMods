@@ -10,6 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "솔루션 항목", "솔루�
 		.gitignore = .gitignore
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BillFailureCooldown", "BillFailureCooldown\BillFailureCooldown.csproj", "{640CE1A4-89B6-48E5-BBB4-1CCBBA3EE8AD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,10 @@ Global
 		{835CD97F-2CC5-4DA9-82D0-1201B576FE32}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{835CD97F-2CC5-4DA9-82D0-1201B576FE32}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{835CD97F-2CC5-4DA9-82D0-1201B576FE32}.Release|Any CPU.Build.0 = Release|Any CPU
+		{640CE1A4-89B6-48E5-BBB4-1CCBBA3EE8AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{640CE1A4-89B6-48E5-BBB4-1CCBBA3EE8AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{640CE1A4-89B6-48E5-BBB4-1CCBBA3EE8AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{640CE1A4-89B6-48E5-BBB4-1CCBBA3EE8AD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

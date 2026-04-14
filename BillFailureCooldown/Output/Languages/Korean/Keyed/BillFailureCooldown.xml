@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <BFC_ModName>Bill Failure Cooldown</BFC_ModName>
+  <BFC_SearchFailureCooldownTicks>작업대 작업의 재료 탐색 실패 쿨다운 틱: {0}</BFC_SearchFailureCooldownTicks>
+  <BFC_SearchFailureCooldownDesc>0 = 비활성화. 수동 우선 작업은 쿨다운을 무시합니다.</BFC_SearchFailureCooldownDesc>
+</LanguageData>
