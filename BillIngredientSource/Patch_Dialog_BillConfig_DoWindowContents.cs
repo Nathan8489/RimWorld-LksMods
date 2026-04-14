@@ -16,16 +16,21 @@ namespace BillIngredientSource {
 			if (bill == null) return;
 
 			BillData data = BillDataStore.GetOrCreate(bill);
+			Map map = GetBillMap(bill);
+
 			if (!data.UseAllStorages && data.SelectedStorageGroup == null && data.HasLegacyData()) {
 				LegacyStorageMigration.TryMigrate(bill, data);
 			}
+
+			if (!data.UseAllStorages && data.SelectedStorageGroup != null) {
+				StorageIngredientSource.ValidateSelectedStorage(map, bill, data);
+			}
+
 			bool useStorage = data.UseAllStorages || data.SelectedStorageGroup != null;
 
 			data.SearchMode = useStorage
 				? IngredientSearchMode.Storage
 				: IngredientSearchMode.Radius;
-
-			Map map = GetBillMap(bill);
 			bool hasIngredientFilter = HasIngredientFilterPanel(bill);
 
 			Rect vanillaRadiusRect = GetVanillaRadiusRect(inRect, hasIngredientFilter);
@@ -96,10 +101,11 @@ namespace BillIngredientSource {
 			}
 
 			BillData data = BillDataStore.GetOrCreate(bill);
+			Map map = GetBillMap(bill);
+
 			if (!data.UseAllStorages && data.SelectedStorageGroup == null && data.HasLegacyData()) {
 				LegacyStorageMigration.TryMigrate(bill, data);
 			}
-			Map map = GetBillMap(bill);
 
 			if (!data.UseAllStorages && data.SelectedStorageGroup != null) {
 				StorageIngredientSource.ValidateSelectedStorage(map, bill, data);
@@ -150,10 +156,7 @@ namespace BillIngredientSource {
 				data.SelectedStorageLabel = null;
 				data.SelectedStorageKind = SelectedStorageKind.None;
 				data.SearchMode = IngredientSearchMode.Storage;
-#if DEBUG
-			if (Prefs.DevMode)
-				Log.Message("[BillIngredientSource] Selected storage: ALL");
-#endif
+				BillIngredientSourceMod.DebugLog("Selected storage: ALL");
 			}));
 
 			if (map != null) {
@@ -173,10 +176,7 @@ namespace BillIngredientSource {
 
 					options.Add(new FloatMenuOption(optionLabel, delegate {
 						StorageIngredientSource.AssignSelectedStorage(data, localZone.GetSlotGroup());
-#if DEBUG
-						if (Prefs.DevMode)
-							Log.Message("[BillIngredientSource] Selected zone: " + localZone.label);
-#endif
+						BillIngredientSourceMod.DebugLog("Selected zone: " + localZone.label);
 					}));
 				}
 
@@ -196,10 +196,7 @@ namespace BillIngredientSource {
 
 					options.Add(new FloatMenuOption(optionLabel, compatible ? (Action)delegate {
 						StorageIngredientSource.AssignSelectedStorage(data, localGroup);
-#if DEBUG
-						if (Prefs.DevMode)
-							Log.Message("[BillIngredientSource] Selected storage: " + SlotGroup.GetGroupLabel(localGroup));
-#endif
+						BillIngredientSourceMod.DebugLog("Selected storage: " + SlotGroup.GetGroupLabel(localGroup));
 					}
 					: null));
 				}

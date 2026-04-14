@@ -89,9 +89,7 @@ namespace BillIngredientSource {
 				);
 			}
 
-#if DEBUG
-			Log.Message($"[BIS] storage candidates={candidates.Count}, available={available.Count}");
-#endif
+			BillIngredientSourceMod.DebugLog($"storage candidates={candidates.Count}, available={available.Count}");
 
 			bool result = RunVanillaSelector(
 				available,
@@ -101,11 +99,8 @@ namespace BillIngredientSource {
 				missingIngredients
 			);
 
-			// selector 결과는 유저 디버깅에도 쓸 수 있음 → DevMode 유지
-#if DEBUG
-			if (Prefs.DevMode)
-				Log.Message($"[BIS] selector result={result}, chosen={chosen.Count}, missing={(missingIngredients?.Count ?? -1)}");
-#endif
+			// selector 결과는 유저 디버깅에도 쓸 수 있음
+			BillIngredientSourceMod.DebugLog($"selector result={result}, chosen={chosen.Count}, missing={(missingIngredients?.Count ?? -1)}");
 			return result;
 		}
 
@@ -122,9 +117,7 @@ namespace BillIngredientSource {
 			List<Thing> available = new List<Thing>();
 			HashSet<int> seenThingIds = new HashSet<int>();
 
-#if DEBUG
-			Log.Message($"[BIS] all storages units={units.Count}");
-#endif
+			BillIngredientSourceMod.DebugLog($"all storages units={units.Count}");
 
 			bool attempted = false;
 
@@ -156,9 +149,7 @@ namespace BillIngredientSource {
 					missingIngredients
 				);
 
-#if DEBUG
-				Log.Message($"[BIS] all storages step={i + 1}/{units.Count}, available={available.Count}, result={result}, chosen={chosen.Count}, missing={(missingIngredients?.Count ?? -1)}");
-#endif
+				BillIngredientSourceMod.DebugLog($"all storages step={i + 1}/{units.Count}, available={available.Count}, result={result}, chosen={chosen.Count}, missing={(missingIngredients?.Count ?? -1)}");
 
 				if (result) {
 					return true;
@@ -176,9 +167,7 @@ namespace BillIngredientSource {
 					missingIngredients
 				);
 
-#if DEBUG
-				Log.Message($"[BIS] all storages final-empty available={available.Count}, result={result}, chosen={chosen.Count}, missing={(missingIngredients?.Count ?? -1)}");
-#endif
+				BillIngredientSourceMod.DebugLog($"all storages final-empty available={available.Count}, result={result}, chosen={chosen.Count}, missing={(missingIngredients?.Count ?? -1)}");
 				return result;
 			}
 
@@ -289,14 +278,10 @@ namespace BillIngredientSource {
 			}
 
 			result.Sort((a, b) => a.MinDistSqToRoot.CompareTo(b.MinDistSqToRoot));
-#if DEBUG
-			if (Prefs.DevMode) {
-				Log.Message("[BIS] Sorted storage units for rootCell " + rootCell + ":");
-				for (int i = 0; i < result.Count; i++) {
-					Log.Message("[BIS]   " + i + ": " + GetStorageUnitDebugLabel(result[i]) + " distSq=" + result[i].MinDistSqToRoot);
-				}
+			BillIngredientSourceMod.DebugLog("Sorted storage units for rootCell " + rootCell + ":");
+			for (int i = 0; i < result.Count; i++) {
+				BillIngredientSourceMod.DebugLog("  " + i + ": " + GetStorageUnitDebugLabel(result[i]) + " distSq=" + result[i].MinDistSqToRoot);
 			}
-#endif
 			return result;
 		}
 
@@ -456,25 +441,12 @@ namespace BillIngredientSource {
 				if (entry.TopologySignature == signature) {
 					entry.LastAccessTick = Find.TickManager != null ? Find.TickManager.TicksGame : 0;
 
-#if DEBUG
-					if (Prefs.DevMode) {
-						Log.Message("[BIS] AllStorages cache HIT map=" + map.uniqueID + " root=" + rootCell);
-					}
-#endif
+					BillIngredientSourceMod.DebugLog("AllStorages cache HIT map=" + map.uniqueID + " root=" + rootCell);
 					return entry.Units;
 				}
-
-#if DEBUG
-				if (Prefs.DevMode) {
-					Log.Message("[BIS] AllStorages cache REBUILD map=" + map.uniqueID + " root=" + rootCell);
-				}
-#endif
+				BillIngredientSourceMod.DebugLog("AllStorages cache REBUILD map=" + map.uniqueID + " root=" + rootCell);
 			} else {
-#if DEBUG
-				if (Prefs.DevMode) {
-					Log.Message("[BIS] AllStorages cache MISS map=" + map.uniqueID + " root=" + rootCell);
-				}
-#endif
+				BillIngredientSourceMod.DebugLog("AllStorages cache MISS map=" + map.uniqueID + " root=" + rootCell);
 			}
 
 			List<StorageUnit> units = BuildAllStorageUnitsUncached(map, rootCell);

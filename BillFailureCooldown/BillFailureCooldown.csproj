@@ -57,6 +57,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="PatchNote.txt" />
     <Compile Include="Patch_WorkGiver_DoBill_JobOnThing.cs" />
     <Compile Include="Patch_WorkGiver_DoBill_TryFindBestBillIngredients.cs" />
     <Compile Include="BillFailureCooldownState.cs" />
@@ -66,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Output\About\About.xml" />
+    <Content Include="Output\About\Preview.png" />
     <Content Include="Output\Languages\English\Keyed\BillFailureCooldown.xml" />
     <Content Include="Output\Languages\Korean\Keyed\BillFailureCooldown.xml" />
   </ItemGroup>

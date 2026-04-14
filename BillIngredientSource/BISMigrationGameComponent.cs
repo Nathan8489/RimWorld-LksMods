@@ -18,9 +18,7 @@ namespace BillIngredientSource {
 
 			// 이미 최신 상태
 			if (legacyBillMigrationDone) {
-				if (Prefs.DevMode) {
-					Log.Message("[BillIngredientSource] Legacy bill migration already up to date.");
-				}
+				BillIngredientSourceMod.DebugLog("Legacy bill migration already up to date.");
 				return;
 			}
 

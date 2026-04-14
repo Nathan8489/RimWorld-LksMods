@@ -31,9 +31,7 @@ namespace BillIngredientSource {
 				data.SelectedStorageGroup = null;
 				data.SearchMode = IngredientSearchMode.Storage;
 				data.ClearLegacyData();
-#if DEBUG
-				Log.Message("[BillIngredientSource] Migrated legacy storage: ALL");
-#endif
+				BillIngredientSourceMod.DebugLog("Migrated legacy storage: ALL");
 				return;
 			}
 
@@ -49,9 +47,7 @@ namespace BillIngredientSource {
 					if (zone != null) {
 						StorageIngredientSource.AssignSelectedStorage(data, zone.GetSlotGroup());
 						data.ClearLegacyData();
-#if DEBUG
-						Log.Message("[BillIngredientSource] Migrated legacy zone by ID: " + zone.label);
-#endif
+						BillIngredientSourceMod.DebugLog("Migrated legacy zone by ID: " + zone.label);
 						return;
 					}
 				}
@@ -65,9 +61,7 @@ namespace BillIngredientSource {
 					if (zoneByLabel != null) {
 						StorageIngredientSource.AssignSelectedStorage(data, zoneByLabel.GetSlotGroup());
 						data.ClearLegacyData();
-#if DEBUG
-						Log.Message("[BillIngredientSource] Migrated legacy zone by label: " + zoneByLabel.label);
-#endif
+						BillIngredientSourceMod.DebugLog("Migrated legacy zone by label: " + zoneByLabel.label);
 						return;
 					}
 				}
@@ -79,9 +73,7 @@ namespace BillIngredientSource {
 				if (migratedGroup != null) {
 					StorageIngredientSource.AssignSelectedStorage(data, migratedGroup);
 					data.ClearLegacyData();
-#if DEBUG
-					Log.Message("[BillIngredientSource] Migrated legacy storage group: " + SlotGroup.GetGroupLabel(migratedGroup));
-#endif
+					BillIngredientSourceMod.DebugLog("Migrated legacy storage group: " + SlotGroup.GetGroupLabel(migratedGroup));
 					return;
 				}
 			}

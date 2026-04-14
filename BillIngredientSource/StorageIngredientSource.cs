@@ -134,11 +134,7 @@ namespace BillIngredientSource {
 				data.SearchMode = IngredientSearchMode.Storage;
 				data.StorageResetNotified = false;
 
-#if DEBUG
-		if (Prefs.DevMode) {
-			Log.Message("[BillIngredientSource] Rematched storage by name: " + data.SelectedStorageLabel);
-		}
-#endif
+				BillIngredientSourceMod.DebugLog("Rematched storage by name: " + data.SelectedStorageLabel);
 				return true;
 			}
 

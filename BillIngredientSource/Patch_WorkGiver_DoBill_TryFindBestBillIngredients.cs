@@ -14,10 +14,12 @@ namespace BillIngredientSource {
 			List<IngredientCount> missingIngredients,
 			ref bool __result) {
 
-			if (!(bill is Bill_Production productionBill))
+			Bill_Production productionBill = bill as Bill_Production;
+			if (productionBill == null)
 				return true;
 
-			if (!BillDataStore.TryGet(productionBill, out var data) || data == null)
+			BillData data;
+			if (!BillDataStore.TryGet(productionBill, out data) || data == null)
 				return true;
 
 			if (!data.UseAllStorages && data.SelectedStorageGroup == null && data.HasLegacyData()) {
@@ -26,7 +28,7 @@ namespace BillIngredientSource {
 
 			bool useStorage = data.UseAllStorages || data.SelectedStorageGroup != null;
 			if (!useStorage)
-				return true; // 바닐라 그대로
+				return true;
 
 			__result = StorageIngredientSearch.TryFindBestBillIngredientsFromStorageUsingVanillaSelector(
 				productionBill,
@@ -35,6 +37,7 @@ namespace BillIngredientSource {
 				chosen,
 				missingIngredients
 			);
+
 			return false;
 		}
 	}

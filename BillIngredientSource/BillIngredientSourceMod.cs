@@ -35,5 +35,17 @@ namespace BillIngredientSource {
 			listing.End();
 			Settings.Write();
 		}
+
+		public static bool DebugLoggingEnabled {
+			get {
+				return Settings != null && Settings.enableDebugLogging;
+			}
+		}
+
+		public static void DebugLog(string message) {
+			if (DebugLoggingEnabled) {
+				Log.Message("[BillIngredientSource] " + message);
+			}
+		}
 	}
 }
