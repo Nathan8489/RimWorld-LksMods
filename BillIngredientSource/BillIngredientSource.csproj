@@ -72,6 +72,7 @@
     <Compile Include="BISIds.cs" />
     <Compile Include="BISMigrationGameComponent.cs" />
     <Compile Include="BISUI.cs" />
+    <Compile Include="ImprovedWorkbenchesCompat.cs" />
     <Compile Include="IngredientSearchMode.cs" />
     <Compile Include="Init.cs" />
     <Compile Include="LegacyStorageMigration.cs" />

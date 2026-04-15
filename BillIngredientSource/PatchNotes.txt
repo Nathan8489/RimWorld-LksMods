@@ -3,3 +3,6 @@ v1.2.6:
 
 v1.3.0:
 	AllStorages 옵션에 대한 정렬을 캐싱하여 성능 개선.
+
+v1.4.0:
+	Better Workbench Management 모드 호환성 추가.
