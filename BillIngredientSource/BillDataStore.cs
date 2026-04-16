@@ -1,16 +1,13 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using RimWorld;
 
 namespace BillIngredientSource {
 	public static class BillDataStore {
-		private static readonly Dictionary<Bill, BillData> dataByBill = new Dictionary<Bill, BillData>();
+		private static readonly ConditionalWeakTable<Bill, BillData> dataByBill = new ConditionalWeakTable<Bill, BillData>();
 
 		public static BillData GetOrCreate(Bill bill) {
-			if (!dataByBill.TryGetValue(bill, out var data)) {
-				data = new BillData();
-				dataByBill[bill] = data;
-			}
-			return data;
+			return dataByBill.GetOrCreateValue(bill);
 		}
 
 		public static bool TryGet(Bill bill, out BillData data) {
@@ -22,7 +19,7 @@ namespace BillIngredientSource {
 				return;
 			}
 
-			dataByBill[bill] = data ?? new BillData();
+			dataByBill.AddOrUpdate(bill, data ?? new BillData());
 		}
 
 		public static void Remove(Bill bill) {
